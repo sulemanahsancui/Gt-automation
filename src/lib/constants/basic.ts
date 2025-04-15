@@ -1,5 +1,5 @@
 export const JOB_TYPE = {
-  CONNECT: 'Connect'
+  CONNECT: 'Connect',
 }
 
 export const COUNTRY_CALLING_CODES = {
@@ -195,7 +195,7 @@ export const COUNTRY_CALLING_CODES = {
   YM: 969,
   // YM: 967,
   ZA: 260,
-  ZI: 263
+  ZI: 263,
 }
 
 export const COUNTRIES = {
@@ -447,7 +447,7 @@ export const COUNTRIES = {
   WI: 'WESTERN SAHARA',
   YM: 'YEMEN',
   ZA: 'ZAMBIA',
-  ZI: 'ZIMBABWE'
+  ZI: 'ZIMBABWE',
 }
 
 /**
@@ -659,7 +659,7 @@ export const COUNTRIES_ALT = {
   VM: 'VIETNAM',
   YM: 'YEMEN',
   ZA: 'ZAMBIA',
-  ZI: 'ZIMBABWE'
+  ZI: 'ZIMBABWE',
 }
 
 export const STATES = {
@@ -727,7 +727,7 @@ export const STATES = {
   // AE: 'Armed Forces Canada',
   // AE: 'Armed Forces Europe',
   // AE: 'Armed Forces Middle East',
-  AP: 'Armed Forces Pacific'
+  AP: 'Armed Forces Pacific',
 }
 
 export const CANANDIAN_STATES = {
@@ -743,7 +743,7 @@ export const CANANDIAN_STATES = {
   PE: 'Prince Edward Island',
   QC: 'Quebec',
   SK: 'Saskatchewan',
-  YT: 'Yukon'
+  YT: 'Yukon',
 }
 
 export const MEXICAN_STATES = {
@@ -779,7 +779,7 @@ export const MEXICAN_STATES = {
   TLA: 'Tlaxcala',
   VER: 'Veracruz',
   YUC: 'Yucatan',
-  ZAC: 'Zacatecas'
+  ZAC: 'Zacatecas',
 }
 
 export const MONTHS: Record<number, string> = {
@@ -794,7 +794,7 @@ export const MONTHS: Record<number, string> = {
   9: 'september',
   10: 'october',
   11: 'november',
-  12: 'december'
+  12: 'december',
 }
 
 export const UNWANTED_CHARS: { [key: string]: string } = {
@@ -861,7 +861,7 @@ export const UNWANTED_CHARS: { [key: string]: string } = {
   û: 'u',
   ý: 'y',
   þ: 'b',
-  ÿ: 'y'
+  ÿ: 'y',
 }
 
 export const STATUSES: { [key: number]: string } = {
@@ -875,7 +875,7 @@ export const STATUSES: { [key: number]: string } = {
   3: 'Chargeback',
   4: 'Refunded - Sent to Collections',
   5: 'Refunded - Collected',
-  10: 'Unresponsive'
+  10: 'Unresponsive',
 }
 
 export const ISSUES: { [key: number]: string } = {
@@ -887,7 +887,7 @@ export const ISSUES: { [key: number]: string } = {
   5: 'Incorrect Passport Number',
   6: 'Renewing Too Early (Will Wait)',
   7: 'Renewing Too Early (No Response)',
-  99: 'Other (Add a note)'
+  99: 'Other (Add a note)',
 }
 
 export const PAGE_ERRORS: { [key: string]: string } = {
@@ -918,7 +918,7 @@ export const PAGE_ERRORS: { [key: string]: string } = {
   'https://www.pay.gov/tcsonline/payment.do?execution=e1s2':
     'Payment page issue',
   'https://www.pay.gov/tcsonline/payment.do?execution=e1s3':
-    'Payment Confirmation page issue'
+    'Payment Confirmation page issue',
 }
 
 export const END_EXECUTION_REASONS: Record<string, number> = {
@@ -927,7 +927,7 @@ export const END_EXECUTION_REASONS: Record<string, number> = {
   'name-mismatch': 4,
   'incorrect-passport': 5,
   'wrong-passid': 3,
-  'verify-address': 4
+  'verify-address': 4,
 }
 
 export const COUNTRIES_3_LETTERCODES = {
@@ -1148,12 +1148,12 @@ export const COUNTRIES_3_LETTERCODES = {
   RS: 'RUS',
   VC: 'VCT',
   SY: 'SYR',
-  WF: 'WLF'
+  WF: 'WLF',
 }
 
 export const BUSINESS_NAMES = {
   'Global Entry': 'ge',
   NEXUS: 'nexus',
   SENTRI: 'sentri',
-  'TSA Pre-Check': 'pretsa'
+  'TSA Pre-Check': 'pretsa',
 }

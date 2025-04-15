@@ -7,17 +7,17 @@ export const logger = createLogger({
     new transports.DailyRotateFile({
       name: 'file',
       datePattern: 'YYYY-MM-DD',
-      filename: './logs/access-%DATE%.log'
-    } as any)
+      filename: './logs/access-%DATE%.log',
+    } as any),
   ],
   exceptionHandlers: [
     new transports.DailyRotateFile({
       name: 'file',
       datePattern: 'YYYY-MM-DD',
-      filename: './logs/errors-%DATE%.log'
-    } as any)
+      filename: './logs/errors-%DATE%.log',
+    } as any),
   ],
-  exitOnError: false
+  exitOnError: false,
 })
 
 logger.log({ level: 'info', message: 'heheh' })

@@ -18,7 +18,7 @@ const Helper = {
   sleep: (ms: number): Promise<void> =>
     new Promise((resolve) => setTimeout(resolve, ms)),
   random: (min: number, max: number): number =>
-    Math.floor(Math.random() * (max - min + 1)) + min
+    Math.floor(Math.random() * (max - min + 1)) + min,
 }
 
 interface Order {
@@ -75,7 +75,7 @@ const BotLogin = {
   async rightPage(
     expectedUrl: string,
     partialMatch: boolean = false,
-    allowRedirect: boolean = false
+    allowRedirect: boolean = false,
   ): Promise<boolean> {
     try {
       if (allowRedirect) {
@@ -90,7 +90,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error checking page URL. Expected: ${expectedUrl}, Current: ${this.page!.url()}`,
-        error
+        error,
       ) // Use non-null assertion
       return false //  Return false on error to prevent further actions
     }
@@ -106,7 +106,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Element with selector "${selector}" not found after 10 seconds.`,
-        error
+        error,
       )
       //  Consider throwing an error or returning a specific value (e.g., null)
       throw error // rethrow
@@ -123,7 +123,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking on element with selector "${selector}"`,
-        error
+        error,
       )
       throw error
     }
@@ -140,7 +140,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking button and navigating. Selector: ${selector}`,
-        error
+        error,
       )
       throw error
     }
@@ -156,7 +156,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking on element with selector: ${selector}`,
-        error
+        error,
       )
       throw error
     }
@@ -173,7 +173,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error typing text into element with selector "${selector}"`,
-        error
+        error,
       )
       throw error
     }
@@ -195,7 +195,7 @@ const BotLogin = {
           // await this.page.mouse.move({x:x, y:y}); // Typescript
           await this.page!.mouse.move(
             Helper.random(5, 320),
-            Helper.random(400, 820)
+            Helper.random(400, 820),
           )
           await Helper.sleep(Helper.random(100, 600))
         } catch (error) {
@@ -266,14 +266,14 @@ const BotLogin = {
         url: 'https://secure.login.gov/',
         version: 'v3',
         action: 'sign_in',
-        min_score: this.captcha_min_score
+        min_score: this.captcha_min_score,
       })
 
       // try to update the captcha token
       await this.page!.evaluate((code: string) => {
         // Type the code parameter
         const captchaElement: any = document.querySelector(
-          '.g-recaptcha-response'
+          '.g-recaptcha-response',
         )
         if (captchaElement) {
           captchaElement.value = code
@@ -306,7 +306,7 @@ const BotLogin = {
     const termsPage = await this.rightPage(
       'https://secure.login.gov/rules_of_use',
       true,
-      true
+      true,
     )
     if (termsPage) {
       // Click checkbox
@@ -319,7 +319,7 @@ const BotLogin = {
 
     // Check if page correct
     const rightPage = await this.rightPage(
-      'https://secure.login.gov/login/two_factor/authenticator'
+      'https://secure.login.gov/login/two_factor/authenticator',
     )
     if (!rightPage) return false
 
@@ -330,7 +330,7 @@ const BotLogin = {
     const totp = new TOTP({
       secret: this.order!.login_auth_key, // Make sure this is the *secret*, not the whole URL, non-null
       digits: 6, //  Most TOTP codes are 6 digits
-      algorithm: 'SHA1' //  Check the correct algorithm
+      algorithm: 'SHA1', //  Check the correct algorithm
     })
     const loginCode = totp.now()
 
@@ -350,12 +350,12 @@ const BotLogin = {
     const secondMfaPage = await this.rightPage(
       'https://secure.login.gov/second_mfa_reminder',
       true,
-      true
+      true,
     )
     if (secondMfaPage) {
       // Click continue
       await this.clickButtonAndNext(
-        'div.grid-row form:nth-of-type(2) button.usa-button'
+        'div.grid-row form:nth-of-type(2) button.usa-button',
       )
       // Sleep
       await this.sleepRandom(true)
@@ -365,14 +365,14 @@ const BotLogin = {
     const signUpCompletedPage = await this.rightPage(
       'https://secure.login.gov/sign_up/completed',
       true,
-      true
+      true,
     )
     if (signUpCompletedPage) {
       // Click continue
       await this.clickButtonAndNext(this.button_usa_wide)
     }
     return true
-  }
+  },
 }
 
 export = BotLogin

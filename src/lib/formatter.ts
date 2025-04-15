@@ -5,10 +5,10 @@ export class Formatter {
    * @returns string
    */
   formatBasic(string: string): string {
-    string = this.replaceComma(string);
-    string = string.replace("  ", " ");
-    const pattern = /[^A-Za-z0-9 \-&\.]/;
-    return string.replace(pattern, "");
+    string = this.replaceComma(string)
+    string = string.replace('  ', ' ')
+    const pattern = /[^A-Za-z0-9 \-&\.]/
+    return string.replace(pattern, '')
   }
 
   /**
@@ -17,8 +17,8 @@ export class Formatter {
    * @returns string
    */
   formatBasic2(string: string): string {
-    const pattern = /[^A-Za-z0-9 \-\/]/;
-    return string.replace(pattern, "");
+    const pattern = /[^A-Za-z0-9 \-\/]/
+    return string.replace(pattern, '')
   }
 
   /**
@@ -27,8 +27,8 @@ export class Formatter {
    * @returns string
    */
   formatBasic3(string: string): string {
-    const pattern = /[^A-Za-z0-9]/;
-    return string.replace(pattern, "");
+    const pattern = /[^A-Za-z0-9]/
+    return string.replace(pattern, '')
   }
 
   /**
@@ -37,11 +37,11 @@ export class Formatter {
    * @returns string
    */
   formatAll(string: string): string {
-    string = this.replaceAmpersand(string);
-    string = this.replaceComma(string);
-    string = this.replaceSlash(string);
-    const pattern = /[^A-Za-z ]/;
-    return string.replace(pattern, "");
+    string = this.replaceAmpersand(string)
+    string = this.replaceComma(string)
+    string = this.replaceSlash(string)
+    const pattern = /[^A-Za-z ]/
+    return string.replace(pattern, '')
   }
 
   /**
@@ -50,11 +50,11 @@ export class Formatter {
    * @returns string
    */
   formatAddress(address: string): string {
-    address = address.replace("#", " Num ");
-    address = address.replace(".", " ");
-    address = address.replace("  ", " ");
-    address = this.formatBasic2(address);
-    return address;
+    address = address.replace('#', ' Num ')
+    address = address.replace('.', ' ')
+    address = address.replace('  ', ' ')
+    address = this.formatBasic2(address)
+    return address
   }
 
   /**
@@ -63,12 +63,12 @@ export class Formatter {
    * @returns string
    */
   formatCity(city: string): string {
-    city = city.replace(".", " ");
-    city = city.replace("  ", " ");
-    city = this.replaceApostrophe(city);
-    city = this.removeAccentedLetters(city);
-    city = this.formatBasic2(city);
-    return city;
+    city = city.replace('.', ' ')
+    city = city.replace('  ', ' ')
+    city = this.replaceApostrophe(city)
+    city = this.removeAccentedLetters(city)
+    city = this.formatBasic2(city)
+    return city
   }
 
   /**
@@ -77,9 +77,9 @@ export class Formatter {
    * @returns string
    */
   formatZipCode(zip_code: string): string {
-    const removeSpaces = zip_code.replace(" ", "");
-    const removeDashes = removeSpaces.replace("-", "");
-    return removeDashes.toUpperCase();
+    const removeSpaces = zip_code.replace(' ', '')
+    const removeDashes = removeSpaces.replace('-', '')
+    return removeDashes.toUpperCase()
   }
 
   /**
@@ -88,9 +88,9 @@ export class Formatter {
    * @returns string
    */
   replaceAmpersand(string: string): string {
-    string = string.replace("&", " and ");
-    string = string.replace("  ", " ");
-    return string;
+    string = string.replace('&', ' and ')
+    string = string.replace('  ', ' ')
+    return string
   }
 
   /**
@@ -99,7 +99,7 @@ export class Formatter {
    * @returns string
    */
   replaceComma(string: string): string {
-    return string.replace(",", " ");
+    return string.replace(',', ' ')
   }
 
   /**
@@ -108,9 +108,9 @@ export class Formatter {
    * @returns string
    */
   replaceApostrophe(string: string): string {
-    string = string.replace("’", " ");
-    string = string.replace("'", " ");
-    return string;
+    string = string.replace('’', ' ')
+    string = string.replace("'", ' ')
+    return string
   }
 
   /**
@@ -119,7 +119,7 @@ export class Formatter {
    * @returns string
    */
   replaceSlash(string: string): string {
-    return string.replace("/", " ");
+    return string.replace('/', ' ')
   }
 
   /**
@@ -128,15 +128,15 @@ export class Formatter {
    * @returns string
    */
   formatPhoneNumber(phone: string): string {
-    const length = phone.length;
+    const length = phone.length
     if (length === 11) {
-      const firstCharacter = phone.charAt(0);
-      if (firstCharacter === "1") {
-        phone = phone.slice(1);
+      const firstCharacter = phone.charAt(0)
+      if (firstCharacter === '1') {
+        phone = phone.slice(1)
       }
-      return phone;
+      return phone
     }
-    return phone;
+    return phone
   }
 
   /**
@@ -145,6 +145,6 @@ export class Formatter {
    * @returns string
    */
   removeAccentedLetters(string: string): string {
-    return string.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return string.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   }
 }

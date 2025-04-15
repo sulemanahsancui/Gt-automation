@@ -1,14 +1,14 @@
-import CryptoJS from "crypto-js";
-import moment from "moment";
-import { Page } from "puppeteer";
+import CryptoJS from 'crypto-js'
+import moment from 'moment'
+import { Page } from 'puppeteer'
 
 export function encrypt(message: string, secretKey: string): string {
-  return CryptoJS.AES.encrypt(message, secretKey).toString();
+  return CryptoJS.AES.encrypt(message, secretKey).toString()
 }
 
 export function decrypt(ciphertext: string, secretKey: string): string {
-  const bytes = CryptoJS.AES.decrypt(ciphertext, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8);
+  const bytes = CryptoJS.AES.decrypt(ciphertext, secretKey)
+  return bytes.toString(CryptoJS.enc.Utf8)
 }
 
 /**
@@ -17,10 +17,10 @@ export function decrypt(ciphertext: string, secretKey: string): string {
 export const waitFor = (sec: number = 1) => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve(true);
-    }, sec * 1000);
-  });
-};
+      resolve(true)
+    }, sec * 1000)
+  })
+}
 
 /**
  *
@@ -28,21 +28,7 @@ export const waitFor = (sec: number = 1) => {
  * @returns
  */
 export const replaceRegex = (text: string): string =>
-  text.replace(/\n\s*\n/g, " ").trim();
-
-/**
- *
- * @param fn
- * @returns
- */
-export const tryCatchWrapper = (fn: Function) => {
-  try {
-    return Promise.resolve(fn());
-  } catch (error) {
-    console.log("ERROR");
-    throw error;
-  }
-};
+  text.replace(/\n\s*\n/g, ' ').trim()
 
 /**
  *
@@ -51,21 +37,21 @@ export const tryCatchWrapper = (fn: Function) => {
  */
 export const checkTimeIsValid = (time: any) => {
   const timeFormat = [
-    "H:mm",
-    "HH:mm",
-    "h:mm",
-    "h:mm a",
-    "hh:mm",
-    "hh.mm",
-    "h.mm",
-    "hh:mm a",
-  ];
+    'H:mm',
+    'HH:mm',
+    'h:mm',
+    'h:mm a',
+    'hh:mm',
+    'hh.mm',
+    'h.mm',
+    'hh:mm a',
+  ]
   for (let index = 0; index < timeFormat.length; index++) {
-    const format = timeFormat[index];
-    if (moment(time, format, true).isValid()) return format;
+    const format = timeFormat[index]
+    if (moment(time, format, true).isValid()) return format
   }
-  return false;
-};
+  return false
+}
 
 /**
  *
@@ -74,8 +60,8 @@ export const checkTimeIsValid = (time: any) => {
  * @returns
  */
 export const checkDateIsValid = (date: any, format: string) => {
-  return moment(date, format, true).isValid();
-};
+  return moment(date, format, true).isValid()
+}
 
 /**
  *
@@ -83,8 +69,8 @@ export const checkDateIsValid = (date: any, format: string) => {
  * @param domElement
  * @returns
  */
-export const getCSSClass = (className: string = "", domElement = "div") =>
-  domElement + "." + replaceAll(className, " ", ".");
+export const getCSSClass = (className: string = '', domElement = 'div') =>
+  domElement + '.' + replaceAll(className, ' ', '.')
 
 /**
  *
@@ -94,7 +80,7 @@ export const getCSSClass = (className: string = "", domElement = "div") =>
  * @returns
  */
 export const replaceAll = (str: string, find: string, replace: string) =>
-  str.replace(new RegExp(find, "g"), replace);
+  str.replace(new RegExp(find, 'g'), replace)
 
 /**
  *
@@ -102,9 +88,9 @@ export const replaceAll = (str: string, find: string, replace: string) =>
  * @returns
  */
 export const getStringFromJSON = (obj: any) => {
-  if (typeof obj === "string") return obj;
-  if (typeof obj === "object") return JSON.stringify(obj);
-};
+  if (typeof obj === 'string') return obj
+  if (typeof obj === 'object') return JSON.stringify(obj)
+}
 
 /**
  *
@@ -114,16 +100,16 @@ export const getStringFromJSON = (obj: any) => {
 export const autoScroll = async (page: Page) => {
   await page.evaluate(async () => {
     await new Promise<void>((resolve) => {
-      let totalHeight = 0;
-      const distance = 300;
+      let totalHeight = 0
+      const distance = 300
       const timer = setInterval(() => {
-        window.scrollBy(0, distance);
-        totalHeight += distance;
+        window.scrollBy(0, distance)
+        totalHeight += distance
         if (totalHeight >= document.body.scrollHeight) {
-          clearInterval(timer);
-          resolve();
+          clearInterval(timer)
+          resolve()
         }
-      }, 500);
-    });
-  });
-};
+      }, 500)
+    })
+  })
+}

@@ -16,7 +16,7 @@ import {
   ServiceType,
   STATES,
   STATUSES,
-  UNWANTED_CHARS
+  UNWANTED_CHARS,
 } from '../lib'
 
 export class HelperService {
@@ -37,7 +37,7 @@ export class HelperService {
     path: string,
     currentPath: string,
     exact = false,
-    active = 'active'
+    active = 'active',
   ): string {
     if (exact) return currentPath === path ? active : ''
     return currentPath.startsWith(path) ? active : ''
@@ -63,13 +63,13 @@ export class HelperService {
     const client = new KMSClient({ credentials: fromEnv() })
     const command = new EncryptCommand({
       KeyId: kmsKeyId,
-      Plaintext: new TextEncoder().encode(value)
+      Plaintext: new TextEncoder().encode(value),
     })
 
     try {
       const response = await client.send(command)
       return Buffer.from(response.CiphertextBlob as Uint8Array).toString(
-        'base64'
+        'base64',
       )
     } catch (err) {
       console.error('Encryption failed:', err)
@@ -80,7 +80,7 @@ export class HelperService {
   static async decrypt(value: string): Promise<string> {
     const client = new KMSClient({ credentials: fromEnv() })
     const command = new DecryptCommand({
-      CiphertextBlob: Buffer.from(value, 'base64')
+      CiphertextBlob: Buffer.from(value, 'base64'),
     })
 
     try {
@@ -113,7 +113,8 @@ export class HelperService {
     } else {
       const formatted = this.titleCase(state)
       const found = Object.entries(states).find(
-        ([abbrev, name]) => name === formatted
+        // eslint-disable-next-line
+        ([_, name]) => name === formatted
       )
       return found ? found[0] : false
     }
@@ -150,7 +151,8 @@ export class HelperService {
     } else {
       const upper = name.toUpperCase()
       const found = Object.entries(countries).find(
-        ([abbr, full]) => (full as string)?.toUpperCase() === upper
+        // eslint-disable-next-line
+        ([_, full]) => (full as string)?.toUpperCase() === upper
       )
       return found ? found[0] : false
     }
@@ -197,7 +199,7 @@ export class HelperService {
     return {
       None: 0,
       'Application ID': 1,
-      'Membership Number/PASSID': 2
+      'Membership Number/PASSID': 2,
     }
   }
 
@@ -230,7 +232,7 @@ export class HelperService {
   static getMonthNumber(month: string): string | undefined {
     const normalizedMonth = month.toLowerCase()
     const match = Object.entries(MONTHS).find(
-      ([, name]) => name === normalizedMonth
+      ([, name]) => name === normalizedMonth,
     )
 
     return match ? match[0] : undefined
@@ -377,7 +379,8 @@ export class HelperService {
    * Check if a string is a valid IP address (non-private and non-reserved)
    */
   static isValidIp(ip: string): boolean {
-    const regex = /^(?!10\.\d{1,3}\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|0\.\d{1,3}\.\d{1,3}\.\d{1,3})(\d{1,3}\.){3}\d{1,3}$/
+    const regex =
+      /^(?!10\.\d{1,3}\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|0\.\d{1,3}\.\d{1,3}\.\d{1,3})(\d{1,3}\.){3}\d{1,3}$/
     return regex.test(ip)
   }
 

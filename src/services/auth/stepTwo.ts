@@ -1,6 +1,5 @@
-import { Page } from "puppeteer";
-import { logger } from "../../lib";
+import { logger } from '../../lib'
 
-export const stepTwo = async (page: Page) => {
-  logger.info("Starting login step one...");
-};
+export const stepTwo = async () => {
+  logger.info('Starting login step one...')
+}

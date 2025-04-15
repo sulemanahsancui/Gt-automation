@@ -10,7 +10,7 @@ export class ProxyService {
     const proxy = {
       username: this.proxyUsername,
       ip: '192.168.1.100',
-      port: 8080
+      port: 8080,
     }
     return proxy
   }

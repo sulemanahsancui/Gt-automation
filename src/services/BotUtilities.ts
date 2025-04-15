@@ -8,7 +8,7 @@ import {
   IScreenResolution,
   newBrowser,
   PAGE_ERRORS,
-  ProxyCredentials
+  ProxyCredentials,
 } from '../lib'
 import { IP_CHECK_URL } from '../lib/constants'
 
@@ -62,7 +62,7 @@ export class BotUtilities {
       '--ignore-certificate-errors-spki-list',
       '--lang=en-US',
       '--disable-web-security',
-      '--disable-features=IsolateOrigins,site-per-process'
+      '--disable-features=IsolateOrigins,site-per-process',
       //'--user-agent=' . $this.profile.user_agent
     ]
 
@@ -72,7 +72,7 @@ export class BotUtilities {
 
     this.browser = await newBrowser({
       headless: config('NODE_ENV') == 'development' ? false : true,
-      args
+      args,
     })
 
     const context = this.browser.defaultBrowserContext()
@@ -81,13 +81,13 @@ export class BotUtilities {
     if (this.useProxy) {
       await this.page.authenticate({
         username: this.proxy?.username as string,
-        password: this.proxy?.password as string
+        password: this.proxy?.password as string,
       })
     }
     await this.page.setViewport({
       width: 1280,
       height: 743,
-      deviceScaleFactor: 1
+      deviceScaleFactor: 1,
     })
 
     this.page.on('dialog', async (dialog) => await dialog.accept())
@@ -101,7 +101,7 @@ export class BotUtilities {
     try {
       await this?.page?.goto(IP_CHECK_URL, {
         timeout: 10000,
-        waitUntil: 'domcontentloaded'
+        waitUntil: 'domcontentloaded',
       })
 
       const json = await this.getInnerText('pre')
@@ -112,7 +112,7 @@ export class BotUtilities {
         ipaddress: out.query,
         proxyUsername: this?.proxy?.username,
         orderId: this?.order?.id,
-        proxyDetails: json
+        proxyDetails: json,
       }
 
       console.log('Saving BotLog:', botLog)
@@ -134,7 +134,7 @@ export class BotUtilities {
     ) {
       await this?.page?.authenticate({
         username: this.proxy.username,
-        password: this.proxy.password
+        password: this.proxy.password,
       })
     }
 
@@ -189,7 +189,7 @@ export class BotUtilities {
       { id: 3, width: 1440, height: 900 },
       { id: 4, width: 1600, height: 900 },
       { id: 5, width: 1280, height: 720 },
-      { id: 6, width: 1280, height: 800 }
+      { id: 6, width: 1280, height: 800 },
     ]
 
     const randomIndex = Math.floor(Math.random() * screenSizes.length)
@@ -212,6 +212,7 @@ export class BotUtilities {
     }
 
     const botProperties = `Page #: ${this.pageCount} | PXY: ${this.proxy?.id} | PFL: ${this.profile?.id} | RES: ${this.screenResolution?.id}`
+    console.log('botProperties', botProperties)
     // TODO:
     // Save this to order
     // this.order?.bot_message = botProperties;
@@ -267,7 +268,7 @@ export class BotUtilities {
     try {
       await this.page?.click(selector, {
         clickCount,
-        delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20
+        delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20,
       })
     } catch (error) {
       this.endExecution('Node Exception')
@@ -284,7 +285,7 @@ export class BotUtilities {
   async type(
     selector: string,
     text: string | number,
-    overwrite: boolean = false
+    overwrite: boolean = false,
   ): Promise<boolean | void> {
     if (text === undefined || text === null || text === '') return false
 
@@ -296,7 +297,7 @@ export class BotUtilities {
 
     try {
       await this.page?.type(selector, String(text), {
-        delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20
+        delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20,
       })
     } catch (error) {
       this.endExecution('Node Exception')
@@ -338,7 +339,7 @@ export class BotUtilities {
         }
       },
       selector,
-      label
+      label,
     )
   }
 
@@ -380,7 +381,7 @@ export class BotUtilities {
    */
   async waitForSelector(
     selector: string,
-    hidden: boolean = false
+    hidden: boolean = false,
   ): Promise<boolean> {
     try {
       for (let x = 1; x <= 24; x++) {
@@ -417,7 +418,7 @@ export class BotUtilities {
 
     await this.page.screenshot({
       path,
-      fullPage: ![3, 4, 5].includes(this.botType)
+      fullPage: ![3, 4, 5].includes(this.botType),
     })
 
     await this.order.save()
@@ -487,7 +488,7 @@ export class BotUtilities {
     selector: string,
     clickCount: boolean = true,
     useUrl: boolean = false,
-    url: string = ''
+    url: string = '',
   ): Promise<void> {
     await this.waitForSelector(selector)
     await this.click(selector)
@@ -528,7 +529,7 @@ export class BotUtilities {
   async rightPage(
     url: string,
     exact: boolean = true,
-    noError: boolean = false
+    noError: boolean = false,
   ): Promise<boolean> {
     const currentUrl = await this.page?.url()
 
@@ -545,7 +546,7 @@ export class BotUtilities {
 
     // Determine the error message
     const errorKey = Object.keys(PAGE_ERRORS).find(
-      (key) => currentUrl?.endsWith(key) || currentUrl === key
+      (key) => currentUrl?.endsWith(key) || currentUrl === key,
     )
 
     // Create a beautiful error message
@@ -604,7 +605,7 @@ export class BotUtilities {
         this.randomizedMouseMovements !== undefined
           ? `RMM: ${this.randomizedMouseMovements}`
           : null,
-        this.userAgentId !== undefined ? `UA: ${this.userAgentId}` : null
+        this.userAgentId !== undefined ? `UA: ${this.userAgentId}` : null,
       ]
         .filter(Boolean)
         .join(' | ')
@@ -638,7 +639,7 @@ export class BotUtilities {
     return {
       day: parsed.date(),
       month: parsed.month() + 1, // moment months are 0-indexed
-      year: parsed.year()
+      year: parsed.year(),
     }
   }
 
@@ -649,12 +650,8 @@ export class BotUtilities {
     const month = dob_month.toString().padStart(2, '0')
 
     this.dob = moment(`${dob_year}-${month}-${day}`, 'YYYY-MM-DD').valueOf()
-    this.minimumYears = moment()
-      .subtract(14, 'years')
-      .valueOf()
-    this.minimumYears_18 = moment()
-      .subtract(18, 'years')
-      .valueOf()
+    this.minimumYears = moment().subtract(14, 'years').valueOf()
+    this.minimumYears_18 = moment().subtract(18, 'years').valueOf()
   }
 
   // Get class name of a DOM element
