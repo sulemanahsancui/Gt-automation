@@ -1,9 +1,9 @@
 import puppeteer from "puppeteer-extra";
-import { Browser, Page } from "puppeteer";
+import { Browser, LaunchOptions, Page } from "puppeteer";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
-// Use the stealth plugin
 puppeteer.use(StealthPlugin());
+
 /**
  *
  * @param proxy
@@ -11,16 +11,9 @@ puppeteer.use(StealthPlugin());
  * @param userId
  * @returns
  */
-export const newBrowser = async () => {
+export const newBrowser = async (options: LaunchOptions) => {
   try {
-    const { HEADLESS } = process.env as any;
-    const parts = process.cwd().split("/"); // USE IT IF NEED TO PERSIST BROWSER
-    const browser = await puppeteer.launch({
-      headless: HEADLESS,
-      args: [
-        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36",
-      ],
-    });
+    const browser = await puppeteer.launch(options);
 
     return browser;
   } catch (error) {
@@ -36,7 +29,10 @@ export const newBrowser = async () => {
  * @returns
  */
 
-export const newPage = async (browser: Browser, url: string): Promise<Page> => {
+export const newPage = async (
+  browser: Browser,
+  url?: string
+): Promise<Page> => {
   if (!browser) throw new Error("Browser is not initialized!");
 
   // Create a new page inside context.
@@ -44,7 +40,7 @@ export const newPage = async (browser: Browser, url: string): Promise<Page> => {
 
   await page.setDefaultTimeout(60000);
 
-  await page.goto(url, { waitUntil: "networkidle0" });
+  if (url) await page.goto(url, { waitUntil: "networkidle0" });
 
   return page;
 };
@@ -61,4 +57,3 @@ export const closeSession = async (browser: Browser) => {
     return Promise.reject(error);
   }
 };
- 
