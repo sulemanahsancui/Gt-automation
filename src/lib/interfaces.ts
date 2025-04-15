@@ -2,7 +2,7 @@ export interface JSON {
   [key: string]: any
 }
 
-export type waitUntil = 'load' | 'domcontentloaded' | 'networkidle0' | 'commit'
+export type WAIT_UNTIL = 'load' | 'domcontentloaded' | 'networkidle0' | 'commit'
 
 export interface ProxyCredentials {
   username: string

@@ -1,15 +1,16 @@
-import { Browser, Page, Puppeteer } from 'puppeteer'
+import moment from 'moment-timezone'
+import { Browser, Page } from 'puppeteer'
+import { ProfileService, ProxyService, TicketService } from '.'
+import { config } from '../config'
 import {
   BotLogEntry,
+  END_EXECUTION_REASONS,
   IScreenResolution,
   newBrowser,
+  PAGE_ERRORS,
   ProxyCredentials
 } from '../lib'
-import { config } from '../config'
-import { ProfileService } from './ProfileService'
-import { ProxyService } from './ProxyService'
-import { TicketService } from './TicketService'
-import moment from 'moment-timezone'
+import { IP_CHECK_URL } from '../lib/constants'
 
 export class BotUtilities {
   // Basic properties
@@ -41,6 +42,8 @@ export class BotUtilities {
   constructor(useProxy = false, proxy: ProxyCredentials | null = null) {
     this.useProxy = useProxy
     this.proxy = proxy
+
+    this.setupEnvironment()
   }
 
   /**
@@ -68,7 +71,7 @@ export class BotUtilities {
     }
 
     this.browser = await newBrowser({
-      headless: config('NODE_ENV') == 'local' ? false : true,
+      headless: config('NODE_ENV') == 'development' ? false : true,
       args
     })
 
@@ -87,24 +90,19 @@ export class BotUtilities {
       deviceScaleFactor: 1
     })
 
-    this.page.on('dialog', async (dialog) => {
-      await dialog.accept()
-    })
+    this.page.on('dialog', async (dialog) => await dialog.accept())
   }
 
   getInnerText(selector: string): Promise<string> | undefined {
-    return this?.page?.$eval(selector, (el) => el.textContent?.trim() || '')
+    return this.page?.$eval(selector, (el) => el.textContent?.trim() || '')
   }
 
   async saveBotLog(): Promise<void> {
     try {
-      await this?.page?.goto(
-        'https://pro.ip-api.com/json/?key=YjIQJ73njN7S9nK',
-        {
-          timeout: 10000,
-          waitUntil: 'domcontentloaded'
-        }
-      )
+      await this?.page?.goto(IP_CHECK_URL, {
+        timeout: 10000,
+        waitUntil: 'domcontentloaded'
+      })
 
       const json = await this.getInnerText('pre')
       const out = JSON.parse(json as string)
@@ -522,111 +520,43 @@ export class BotUtilities {
   }
 
   /**
-   * Check if we're on the right page
-   * @param url - The expected URL or part of it
-   * @param exact - Whether to require an exact match
-   * @param noError - If true, skip throwing error on mismatch
-   * @returns Promise<boolean>
+   * Checks if we're on the expected page with graceful error handling
+   * @param expectedUrl - The URL or partial path to match
+   * @param options - Configuration options
+   * @returns Promise indicating if we're on the right page
    */
   async rightPage(
     url: string,
     exact: boolean = true,
     noError: boolean = false
-  ): Promise<boolean | undefined> {
-    const currentUrl: string | undefined = await this.page?.url()
+  ): Promise<boolean> {
+    const currentUrl = await this.page?.url()
 
-    if (!exact) {
-      return currentUrl?.includes(url)
-    }
+    // Quick match for non-exact cases
+    if (!exact) return currentUrl?.includes(url) ?? false
 
-    if (currentUrl !== url) {
-      if (noError) {
-        return false
-      }
+    // Exact match success case
+    if (currentUrl === url) return true
 
-      const urlParts = currentUrl?.split('/')
-      const page = urlParts?.[urlParts?.length - 1]
+    // Silent mode for non-error cases
+    if (noError) return false
 
-      switch (page) {
-        case 'drivers-license':
-          this.endExecution("Problem on Driver's License page.")
-          break
-        case 'documents':
-          this.endExecution('Problem on Passport page.')
-          break
-        case 'vehicle-info':
-          this.endExecution('Problem on Vehicle page.')
-          break
-        case 'address-history':
-          this.endExecution('Problem on Addresses page.')
-          break
-        case 'employment-history':
-          this.endExecution('Problem on Employment page.')
-          break
-        case 'travel-history':
-          this.endExecution('Problem on Travel History page.')
-          break
-        case 'additional-info':
-          this.endExecution('Problem on Additional Info page.')
-          break
-        case 'final-review':
-          this.endExecution('Problem on Final Review page.')
-          break
-        case 'program-certification':
-          this.endExecution('Problem on Certification/Agreement page.')
-          break
-      }
+    // Create a beautiful error mapping
 
-      switch (currentUrl) {
-        case 'https://ttp.cbp.dhs.gov/':
-        case 'https://ttp.cbp.dhs.gov/dashboard':
-          this.endExecution('Problem on the Start page.')
-          break
+    // Determine the error message
+    const errorKey = Object.keys(PAGE_ERRORS).find(
+      (key) => currentUrl?.endsWith(key) || currentUrl === key
+    )
 
-        case 'https://secure.login.gov/login/two_factor/authenticator':
-          this.endExecution('Problem on 2 Factor Auth page.')
-          break
+    // Create a beautiful error message
+    const errorMessage = errorKey
+      ? PAGE_ERRORS[errorKey]
+      : `Unexpected URL: ${currentUrl}`
 
-        case 'https://ttp.cbp.dhs.gov/getstarted;stepDone=3':
-          this.endExecution('Problem on Next Steps page.')
-          break
-
-        case 'https://ttp.cbp.dhs.gov/program-selection/select-program':
-          this.endExecution('Problem on Select Program page.')
-          break
-
-        case 'https://ttp.cbp.dhs.gov/program-selection/acknowledge':
-          this.endExecution(
-            'Problem on Program Selection Acknowledgement page.'
-          )
-          break
-
-        case 'https://ttp.cbp.dhs.gov/purchase-summary':
-          this.endExecution('Problem on Purchase Summary page.')
-          break
-
-        case 'https://www.pay.gov/tcsonline/payment.do?execution=e1s1':
-          this.endExecution('Problem on Payment Method page.')
-          break
-
-        case 'https://www.pay.gov/tcsonline/payment.do?execution=e1s2':
-          this.endExecution('Problem on Payment page.')
-          break
-
-        case 'https://www.pay.gov/tcsonline/payment.do?execution=e1s3':
-          this.endExecution('Problem on Payment Confirmation page.')
-          break
-
-        default:
-          this.endExecution('Wrong URL')
-      }
-
-      return false
-    }
-
-    return true
+    // Handle the error gracefully
+    this.endExecution(errorMessage)
+    return false
   }
-
   /**
    * End execution due to error
    * @param reason Optional reason for ending execution
@@ -656,20 +586,11 @@ export class BotUtilities {
 
     this.order.bot_message = fullReason
 
-    const reasons: Record<string, number> = {
-      'birthplace-mismatch': 4,
-      'dob-mismatch': 4,
-      'name-mismatch': 4,
-      'incorrect-passport': 5,
-      'wrong-passid': 3,
-      'verify-address': 4
-    }
-
-    if (reason in reasons) {
+    if (reason in END_EXECUTION_REASONS) {
       const ticketCreated = await this.createTicket(reason)
       if (ticketCreated) {
         this.order.status = 9
-        this.order.reason = reasons[reason]
+        this.order.reason = END_EXECUTION_REASONS[reason]
       }
     }
 
