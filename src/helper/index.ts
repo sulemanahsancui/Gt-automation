@@ -1,8 +1,7 @@
 import { TOTP } from 'otpauth'
 import TwoCaptcha from '2captcha'
-import { Page } from 'puppeteer' // Import Page type
+import { Page } from 'puppeteer'
 import * as config from '../config'
-//  Helper functions (simulated - you'll need to adapt these)
 const Helper = {
   decrypt: (encrypted: string): string => {
     //  Replace with your actual decryption logic (AES, etc.)
@@ -18,7 +17,7 @@ const Helper = {
   sleep: (ms: number): Promise<void> =>
     new Promise((resolve) => setTimeout(resolve, ms)),
   random: (min: number, max: number): number =>
-    Math.floor(Math.random() * (max - min + 1)) + min,
+    Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 interface Order {
@@ -54,12 +53,12 @@ const BotLogin = {
 
   /**
    * Sleeps for a random amount of time.
-   * @param {boolean} longSleep - If true, uses a longer sleep range.
+   * @param {boolean} longSleep
    */
   async sleepRandom(longSleep: boolean = false): Promise<void> {
     // Use boolean
     if (longSleep) {
-      await Helper.sleep(Helper.random(2000, 5000)) //  Adjust these values
+      await Helper.sleep(Helper.random(2000, 5000))
     } else {
       await Helper.sleep(Helper.random(1000, 3000))
     }
@@ -67,21 +66,21 @@ const BotLogin = {
 
   /**
    * Checks if the current page URL matches the expected URL.
-   * @param {string} expectedUrl - The expected URL.
-   * @param {boolean} partialMatch - If true, checks if the current URL contains the expected URL.
-   * @param {boolean} allowRedirect - if true, checks the final url after redirects
-   * @returns {boolean} - True if the URLs match, false otherwise.
+   * @param {string} expectedUrl
+   * @param {boolean} partialMatch
+   * @param {boolean} allowRedirect
+   * @returns {boolean}
    */
   async rightPage(
     expectedUrl: string,
     partialMatch: boolean = false,
-    allowRedirect: boolean = false,
+    allowRedirect: boolean = false
   ): Promise<boolean> {
     try {
       if (allowRedirect) {
-        await this.page!.waitForNavigation({ waitUntil: 'networkidle2' }) // Use non-null assertion
+        await this.page!.waitForNavigation({ waitUntil: 'networkidle2' })
       }
-      const currentUrl = this.page!.url() // Use non-null assertion
+      const currentUrl = this.page!.url()
       if (partialMatch) {
         return currentUrl.includes(expectedUrl)
       } else {
@@ -90,32 +89,31 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error checking page URL. Expected: ${expectedUrl}, Current: ${this.page!.url()}`,
-        error,
-      ) // Use non-null assertion
-      return false //  Return false on error to prevent further actions
+        error
+      )
+      return false
     }
   },
 
   /**
    * Waits for an element to load on the page.
-   * @param {string} selector - The CSS selector of the element to wait for.
+   * @param {string} selector
    */
   async waitForElement(selector: string): Promise<void> {
     try {
-      await this.page!.waitForSelector(selector, { timeout: 10000 }) //  Increased timeout, non-null
+      await this.page!.waitForSelector(selector, { timeout: 10000 })
     } catch (error) {
       console.error(
         `Element with selector "${selector}" not found after 10 seconds.`,
-        error,
+        error
       )
-      //  Consider throwing an error or returning a specific value (e.g., null)
-      throw error // rethrow
+      throw error
     }
   },
 
   /**
    * Adds an action (click) to the page.  (Simplified for Node.js)
-   * @param {string} selector - The CSS selector of the element to click.
+   * @param {string} selector
    */
   async add(selector: string): Promise<void> {
     try {
@@ -123,7 +121,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking on element with selector "${selector}"`,
-        error,
+        error
       )
       throw error
     }
@@ -131,7 +129,7 @@ const BotLogin = {
 
   /**
    * Clicks a button and navigates to the next page.
-   * @param {string} selector - The CSS selector of the button to click.
+   * @param {string} selector
    */
   async clickButtonAndNext(selector: string): Promise<void> {
     try {
@@ -140,7 +138,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking button and navigating. Selector: ${selector}`,
-        error,
+        error
       )
       throw error
     }
@@ -148,7 +146,7 @@ const BotLogin = {
 
   /**
    * Clicks on an element
-   * @param {string} selector - The CSS selector of the element to click.
+   * @param {string} selector
    */
   async click(selector: string): Promise<void> {
     try {
@@ -156,7 +154,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking on element with selector: ${selector}`,
-        error,
+        error
       )
       throw error
     }
@@ -164,8 +162,8 @@ const BotLogin = {
 
   /**
    * Types text into an input field.
-   * @param {string} selector - The CSS selector of the input field.
-   * @param {string} text - The text to type.
+   * @param {string} selector
+   * @param {string} text
    */
   async type(selector: string, text: string): Promise<void> {
     try {
@@ -173,7 +171,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error typing text into element with selector "${selector}"`,
-        error,
+        error
       )
       throw error
     }
@@ -190,18 +188,14 @@ const BotLogin = {
 
       for (let i = 0; i <= moveTimes; i++) {
         try {
-          // const x = Helper.random(5, 320);
-          // const y = Helper.random(400, 820);
-          // await this.page.mouse.move({x:x, y:y}); // Typescript
           await this.page!.mouse.move(
             Helper.random(5, 320),
-            Helper.random(400, 820),
+            Helper.random(400, 820)
           )
           await Helper.sleep(Helper.random(100, 600))
         } catch (error) {
           console.error('Error during mouse movement', error)
-          //  Should we throw here?  Depends on your error handling strategy
-          // throw error;  //  Optionally re-throw
+          // throw error;
         }
       }
     }
@@ -253,39 +247,36 @@ const BotLogin = {
     await this.randomizedMouseMovements()
 
     // Enter login info
-    await this.type('input.email', this.order!.login_email) // Use non-null assertion
-    await this.type('input.password', this.order!.login_pass) // Decrypt, non-null assertion
+    await this.type('input.email', this.order!.login_email)
+    await this.type('input.password', this.order!.login_pass)
 
     // try to get a valid captcha token
-    const client = new TwoCaptcha(config.twoCaptchaApiKey) // Use the API key from your config
-    this.captcha_min_score = Math.random() * (1.0 - 0.4) + 0.4 // Score between 0.4 and 1.0
+    const client = new TwoCaptcha.Solver(config.twoCaptchaApiKey)
+    this.captcha_min_score = Math.random() * (1.0 - 0.4) + 0.4
 
     try {
-      const result = await client.solveRecaptcha({
-        sitekey: '6LcWWqwnAAAAAL1B9WtNWT8nwwPy_0KiGMEeT3gl',
-        url: 'https://secure.login.gov/',
-        version: 'v3',
-        action: 'sign_in',
-        min_score: this.captcha_min_score,
-      })
+      const result = await client.recaptcha(
+        '6LcWWqwnAAAAAL1B9WtNWT8nwwPy_0KiGMEeT3gl',
+        'https://secure.login.gov/'
+      )
 
       // try to update the captcha token
-      await this.page!.evaluate((code: string) => {
+      await this.page!.evaluate((code: string | any) => {
         // Type the code parameter
         const captchaElement: any = document.querySelector(
-          '.g-recaptcha-response',
+          '.g-recaptcha-response'
         )
         if (captchaElement) {
           captchaElement.value = code
         }
-      }, result.response) // Pass the token string
+      }, result) // Pass the token string
     } catch (error) {
       console.error('TwoCaptcha Error:', error)
       //  Important:  Handle the error.  For example, you might want to:
       //  1.  Retry the captcha
       //  2.  Fail the login attempt
       //  3.  Use a different captcha solving method
-      return false //  Consider if you want to stop the login process here.
+      return false
     }
 
     // Click on Login button
@@ -306,20 +297,17 @@ const BotLogin = {
     const termsPage = await this.rightPage(
       'https://secure.login.gov/rules_of_use',
       true,
-      true,
+      true
     )
     if (termsPage) {
-      // Click checkbox
       await this.click('label[for="rules_of_use_form_terms_accepted"]')
-      // Click continue
       await this.clickButtonAndNext('.usa-button')
-      // Sleep
       await this.sleepRandom(true)
     }
 
     // Check if page correct
     const rightPage = await this.rightPage(
-      'https://secure.login.gov/login/two_factor/authenticator',
+      'https://secure.login.gov/login/two_factor/authenticator'
     )
     if (!rightPage) return false
 
@@ -328,17 +316,17 @@ const BotLogin = {
 
     // Generate login code
     const totp = new TOTP({
-      secret: this.order!.login_auth_key, // Make sure this is the *secret*, not the whole URL, non-null
-      digits: 6, //  Most TOTP codes are 6 digits
-      algorithm: 'SHA1', //  Check the correct algorithm
+      secret: this.order!.login_auth_key,
+      digits: 6,
+      algorithm: 'SHA1'
     })
-    const loginCode = totp.now()
+    const loginCode = totp?.now()
 
     // Enter 2 Factor Code
     await this.type('.one-time-code-input__input', loginCode)
 
     // Don't remember this browser
-    // await this.click('label[for="remember_device"]');  // Removed, no equivalent
+    // await this.click('label[for="remember_device"]');
 
     // Click continue
     await this.clickButtonAndNext(this.button_usa)
@@ -350,12 +338,12 @@ const BotLogin = {
     const secondMfaPage = await this.rightPage(
       'https://secure.login.gov/second_mfa_reminder',
       true,
-      true,
+      true
     )
     if (secondMfaPage) {
       // Click continue
       await this.clickButtonAndNext(
-        'div.grid-row form:nth-of-type(2) button.usa-button',
+        'div.grid-row form:nth-of-type(2) button.usa-button'
       )
       // Sleep
       await this.sleepRandom(true)
@@ -365,14 +353,14 @@ const BotLogin = {
     const signUpCompletedPage = await this.rightPage(
       'https://secure.login.gov/sign_up/completed',
       true,
-      true,
+      true
     )
     if (signUpCompletedPage) {
       // Click continue
       await this.clickButtonAndNext(this.button_usa_wide)
     }
     return true
-  },
+  }
 }
 
 export = BotLogin

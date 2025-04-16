@@ -1,1 +1,1 @@
-export const HOME_URL = 'https://www.linkedin.com/'
+export const HOME_URL = ''
