@@ -7,7 +7,7 @@ import {
   LOGIN_MODEL_FOOTER_SELECTOR,
   Order,
   USER_EMAIL_INPUT_SELECTOR,
-  USER_PASSWORD_INPUT_SELECTOR
+  USER_PASSWORD_INPUT_SELECTOR,
 } from '../../lib'
 
 const Helper = {
@@ -25,7 +25,7 @@ const Helper = {
   sleep: (ms: number): Promise<void> =>
     new Promise((resolve) => setTimeout(resolve, ms)),
   random: (min: number, max: number): number =>
-    Math.floor(Math.random() * (max - min + 1)) + min
+    Math.floor(Math.random() * (max - min + 1)) + min,
 }
 
 const BotLogin = {
@@ -70,7 +70,7 @@ const BotLogin = {
   async rightPage(
     expectedUrl: string,
     partialMatch: boolean = false,
-    allowRedirect: boolean = false
+    allowRedirect: boolean = false,
   ): Promise<boolean> {
     try {
       if (allowRedirect) {
@@ -85,7 +85,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error checking page URL. Expected: ${expectedUrl}, Current: ${this.page!.url()}`,
-        error
+        error,
       )
       return false
     }
@@ -101,7 +101,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Element with selector "${selector}" not found after 10 seconds.`,
-        error
+        error,
       )
       throw error
     }
@@ -117,7 +117,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking on element with selector "${selector}"`,
-        error
+        error,
       )
       throw error
     }
@@ -132,12 +132,12 @@ const BotLogin = {
       await this.page!.click(selector)
       await this.page!.waitForNavigation({
         waitUntil: 'networkidle',
-        timeout: 0
+        timeout: 0,
       })
     } catch (error) {
       console.error(
         `Error clicking button and navigating. Selector: ${selector}`,
-        error
+        error,
       )
       throw error
     }
@@ -153,7 +153,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error clicking on element with selector: ${selector}`,
-        error
+        error,
       )
       throw error
     }
@@ -170,7 +170,7 @@ const BotLogin = {
     } catch (error) {
       console.error(
         `Error typing text into element with selector "${selector}"`,
-        error
+        error,
       )
       throw error
     }
@@ -189,7 +189,7 @@ const BotLogin = {
         try {
           await this.page!.mouse.move(
             Helper.random(5, 320),
-            Helper.random(400, 820)
+            Helper.random(400, 820),
           )
           await Helper.sleep(Helper.random(100, 600))
         } catch (error) {
@@ -268,7 +268,7 @@ const BotLogin = {
     const termsPage = await this.rightPage(
       'https://secure.login.gov/rules_of_use',
       true,
-      true
+      true,
     )
     if (termsPage) {
       await this.click('label[for="rules_of_use_form_terms_accepted"]')
@@ -278,7 +278,7 @@ const BotLogin = {
 
     // Check if page correct
     const rightPage = await this.rightPage(
-      'https://secure.login.gov/login/two_factor/authenticator'
+      'https://secure.login.gov/login/two_factor/authenticator',
     )
     if (!rightPage) return false
 
@@ -289,7 +289,7 @@ const BotLogin = {
     const totp = new OTPAuth.TOTP({
       secret: this.order!.login_auth_key,
       digits: 6,
-      algorithm: 'SHA1'
+      algorithm: 'SHA1',
     })
     const loginCode = totp.generate()
 
@@ -309,12 +309,12 @@ const BotLogin = {
     const secondMfaPage = await this.rightPage(
       'https://secure.login.gov/second_mfa_reminder',
       true,
-      true
+      true,
     )
     if (secondMfaPage) {
       // Click continue
       await this.clickButtonAndNext(
-        'div.grid-row form:nth-of-type(2) button.usa-button'
+        'div.grid-row form:nth-of-type(2) button.usa-button',
       )
       // Sleep
       await this.sleepRandom(true)
@@ -324,14 +324,14 @@ const BotLogin = {
     const signUpCompletedPage = await this.rightPage(
       'https://secure.login.gov/sign_up/completed',
       true,
-      true
+      true,
     )
     if (signUpCompletedPage) {
       // Click continue
       await this.clickButtonAndNext(this.button_usa_wide)
     }
     return true
-  }
+  },
 }
 
 export = BotLogin

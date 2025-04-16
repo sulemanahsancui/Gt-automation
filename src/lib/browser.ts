@@ -9,9 +9,9 @@ chromium.use(
   RecaptchaPlugin({
     provider: {
       id: '2captcha',
-      token: config('TWOCAPTCHA_TOKEN') || 'YOUR_API_KEY'
-    }
-  })
+      token: config('TWOCAPTCHA_TOKEN') || 'YOUR_API_KEY',
+    },
+  }),
 )
 /**
  *
@@ -40,7 +40,7 @@ export const newBrowser = async (options: LaunchOptions) => {
 
 export const newPage = async (
   browser: Browser,
-  url?: string
+  url?: string,
 ): Promise<Page> => {
   if (!browser) throw new Error('Browser is not initialized!')
 

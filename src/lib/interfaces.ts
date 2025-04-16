@@ -27,8 +27,6 @@ export interface IScreenResolution {
   height: number
 }
 
-
-
 export interface Order {
   // Define the Order interface
   login_email: string
