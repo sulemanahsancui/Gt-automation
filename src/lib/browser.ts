@@ -1,9 +1,18 @@
-import puppeteer from 'puppeteer-extra'
-import { Browser, LaunchOptions, Page } from 'puppeteer'
+import { chromium } from 'playwright-extra'
+import { Browser, LaunchOptions, Page } from 'playwright'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import RecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha'
+import { config } from '../config'
 
-puppeteer.use(StealthPlugin())
-
+chromium.use(StealthPlugin())
+chromium.use(
+  RecaptchaPlugin({
+    provider: {
+      id: '2captcha',
+      token: config('TWOCAPTCHA_TOKEN') || 'YOUR_API_KEY'
+    }
+  })
+)
 /**
  *
  * @param proxy
@@ -13,7 +22,7 @@ puppeteer.use(StealthPlugin())
  */
 export const newBrowser = async (options: LaunchOptions) => {
   try {
-    const browser = await puppeteer.launch(options)
+    const browser = await chromium.launch(options)
 
     return browser
   } catch (error) {
@@ -31,7 +40,7 @@ export const newBrowser = async (options: LaunchOptions) => {
 
 export const newPage = async (
   browser: Browser,
-  url?: string,
+  url?: string
 ): Promise<Page> => {
   if (!browser) throw new Error('Browser is not initialized!')
 
@@ -40,7 +49,7 @@ export const newPage = async (
 
   await page.setDefaultTimeout(60000)
 
-  if (url) await page.goto(url, { waitUntil: 'networkidle0' })
+  if (url) await page.goto(url, { waitUntil: 'networkidle' })
 
   return page
 }

@@ -1,7 +1,15 @@
-import { TOTP } from 'otpauth'
-import TwoCaptcha from '2captcha'
-import { Page } from 'puppeteer'
-import * as config from '../config'
+import * as OTPAuth from 'otpauth'
+import { Page } from 'playwright'
+import {
+  BUTTON_USA_SELECTOR,
+  BUTTON_USA_WIDE,
+  LOGIN_BUTTON_SELECTOR,
+  LOGIN_MODEL_FOOTER_SELECTOR,
+  Order,
+  USER_EMAIL_INPUT_SELECTOR,
+  USER_PASSWORD_INPUT_SELECTOR
+} from '../../lib'
+
 const Helper = {
   decrypt: (encrypted: string): string => {
     //  Replace with your actual decryption logic (AES, etc.)
@@ -20,36 +28,24 @@ const Helper = {
     Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-interface Order {
-  // Define the Order interface
-  login_email: string
-  login_pass: string
-  login_auth_key: string
-  // Add other order properties as needed
-}
-
 const BotLogin = {
   captcha_min_score: 0,
-  button_usa: 'button.usa-button',
-  button_usa_wide: 'form button.usa-button.usa-button--wide',
+  button_usa: BUTTON_USA_SELECTOR,
+  button_usa_wide: BUTTON_USA_WIDE,
   randomized_mouse_movements: 0,
   page: null as Page | null,
-  order: null as Order | null,
+  order: {} as Order | null,
 
   /**
-   * Initializes the BotLogin module with the Puppeteer page object.
-   * @param {puppeteer.Page} page - The Puppeteer page object.
-   * @param {object} order - the order object.
+   * Initializes the BotLogin module with the Playwright page object.
+   * @param {playwright.Page} page
+   * @param {object} order
    */
   async init(page: Page, order: Order): Promise<void> {
     // Specify types
     this.page = page
     this.order = order
   },
-
-  // -------------------------------------------------------------------------------------
-  // Utility Methods (from PHP Trait)
-  // -------------------------------------------------------------------------------------
 
   /**
    * Sleeps for a random amount of time.
@@ -78,7 +74,7 @@ const BotLogin = {
   ): Promise<boolean> {
     try {
       if (allowRedirect) {
-        await this.page!.waitForNavigation({ waitUntil: 'networkidle2' })
+        await this.page!.waitForNavigation({ waitUntil: 'networkidle' })
       }
       const currentUrl = this.page!.url()
       if (partialMatch) {
@@ -101,7 +97,7 @@ const BotLogin = {
    */
   async waitForElement(selector: string): Promise<void> {
     try {
-      await this.page!.waitForSelector(selector, { timeout: 10000 })
+      await this.page!.waitForSelector(selector, { timeout: 0 })
     } catch (error) {
       console.error(
         `Element with selector "${selector}" not found after 10 seconds.`,
@@ -134,7 +130,10 @@ const BotLogin = {
   async clickButtonAndNext(selector: string): Promise<void> {
     try {
       await this.page!.click(selector)
-      await this.page!.waitForNavigation({ waitUntil: 'networkidle2' })
+      await this.page!.waitForNavigation({
+        waitUntil: 'networkidle',
+        timeout: 0
+      })
     } catch (error) {
       console.error(
         `Error clicking button and navigating. Selector: ${selector}`,
@@ -215,15 +214,15 @@ const BotLogin = {
     if (!rightPage) return false
 
     // Wait for element to load
-    await this.waitForElement('input.login-button')
+    await this.waitForElement(LOGIN_BUTTON_SELECTOR)
 
     // Click on Login button
-    await this.add('input.login-button')
+    await this.add(LOGIN_BUTTON_SELECTOR)
 
     await this.sleepRandom(true)
 
     // Click on Consent and Continue
-    await this.clickButtonAndNext('.modal-footer button.btn-primary')
+    await this.clickButtonAndNext(LOGIN_MODEL_FOOTER_SELECTOR)
     return true
   },
 
@@ -241,43 +240,15 @@ const BotLogin = {
     if (!rightPage) return false
 
     // Wait for element to load
-    await this.waitForElement('input.email')
+    await this.waitForElement(USER_EMAIL_INPUT_SELECTOR)
 
     // Randomized mouse movements
     await this.randomizedMouseMovements()
 
     // Enter login info
-    await this.type('input.email', this.order!.login_email)
-    await this.type('input.password', this.order!.login_pass)
-
-    // try to get a valid captcha token
-    const client = new TwoCaptcha.Solver(config.twoCaptchaApiKey)
-    this.captcha_min_score = Math.random() * (1.0 - 0.4) + 0.4
-
-    try {
-      const result = await client.recaptcha(
-        '6LcWWqwnAAAAAL1B9WtNWT8nwwPy_0KiGMEeT3gl',
-        'https://secure.login.gov/'
-      )
-
-      // try to update the captcha token
-      await this.page!.evaluate((code: string | any) => {
-        // Type the code parameter
-        const captchaElement: any = document.querySelector(
-          '.g-recaptcha-response'
-        )
-        if (captchaElement) {
-          captchaElement.value = code
-        }
-      }, result) // Pass the token string
-    } catch (error) {
-      console.error('TwoCaptcha Error:', error)
-      //  Important:  Handle the error.  For example, you might want to:
-      //  1.  Retry the captcha
-      //  2.  Fail the login attempt
-      //  3.  Use a different captcha solving method
-      return false
-    }
+    await this.type(USER_EMAIL_INPUT_SELECTOR, this.order!.login_email)
+    await this.type(USER_PASSWORD_INPUT_SELECTOR, this.order!.login_pass)
+    //TODO:IF STEALTH PLUGIN DIDNT WORK USE THIRD PARTY
 
     // Click on Login button
     await this.clickButtonAndNext(this.button_usa)
@@ -315,12 +286,12 @@ const BotLogin = {
     await this.waitForElement('.one-time-code-input__input')
 
     // Generate login code
-    const totp = new TOTP({
+    const totp = new OTPAuth.TOTP({
       secret: this.order!.login_auth_key,
       digits: 6,
       algorithm: 'SHA1'
     })
-    const loginCode = totp?.now()
+    const loginCode = totp.generate()
 
     // Enter 2 Factor Code
     await this.type('.one-time-code-input__input', loginCode)

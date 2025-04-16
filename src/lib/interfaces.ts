@@ -27,4 +27,14 @@ export interface IScreenResolution {
   height: number
 }
 
+
+
+export interface Order {
+  // Define the Order interface
+  login_email: string
+  login_pass: string
+  login_auth_key: string
+  // Add other order properties as needed
+}
+
 export type ServiceType = 'ge' | 'nexus' | 'sentri' | 'pretsa' | string
