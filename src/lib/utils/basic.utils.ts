@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js'
 import moment from 'moment'
-import { Page } from 'puppeteer'
+import { Page } from 'playwright'
 
 export function encrypt(message: string, secretKey: string): string {
   return CryptoJS.AES.encrypt(message, secretKey).toString()
@@ -112,4 +112,30 @@ export const autoScroll = async (page: Page) => {
       }, 500)
     })
   })
+}
+
+/**
+ *
+ *
+ * @ms number
+ */
+
+export const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms))
+
+export const random = (min: number, max: number): number =>
+  Math.floor(Math.random() * (max - min + 1)) + min
+
+/**
+ * Sleeps for a random amount of time.
+ * @param {boolean} longSleep
+ */
+export const sleepRandom = async (
+  longSleep: boolean = false,
+): Promise<void> => {
+  if (longSleep) {
+    await sleep(random(2000, 5000))
+  } else {
+    await sleep(random(1000, 3000))
+  }
 }

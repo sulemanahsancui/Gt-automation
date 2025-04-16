@@ -1,5 +1,5 @@
 import moment from 'moment-timezone'
-import { Browser, Page } from 'puppeteer'
+import { Browser, Page } from 'playwright'
 import { ProfileService, ProxyService, TicketService } from '.'
 import { config } from '../config'
 import {
@@ -9,6 +9,8 @@ import {
   newBrowser,
   PAGE_ERRORS,
   ProxyCredentials,
+  random,
+  sleep,
 } from '../lib'
 import { IP_CHECK_URL } from '../lib/constants'
 
@@ -28,8 +30,7 @@ export class BotUtilities {
   protected userAgentId: number | undefined | null = null
   protected screenResolution: IScreenResolution | null = null
   protected captchaMinScore = 0
-  protected randomizedMouseMovements = null
-
+  randomized_mouse_movements = 0
   // DOB / Years variables
   protected dob: number | null = null
   protected minimumYears: number | null = null
@@ -39,11 +40,19 @@ export class BotUtilities {
   protected botLog: BotLogEntry | null = null
   protected paymentIframe: any
 
-  constructor(useProxy = false, proxy: ProxyCredentials | null = null) {
+  constructor(
+    useProxy = false,
+    page: Page | null,
+    proxy: ProxyCredentials | null = null,
+    browser: Browser | null,
+    order?: any,
+  ) {
     this.useProxy = useProxy
     this.proxy = proxy
-
+    if (page) this.page = page
     this.setupEnvironment()
+    if (browser) this.browser = browser
+    if (order) this.order = order
   }
 
   /**
@@ -66,31 +75,44 @@ export class BotUtilities {
       //'--user-agent=' . $this.profile.user_agent
     ]
 
-    if (this.useProxy && this.proxy) {
-      args.push(`--proxy-server=${this?.proxy?.host}:${this.proxy?.port}`)
-    }
-
     this.browser = await newBrowser({
       headless: config('NODE_ENV') == 'development' ? false : true,
       args,
+      ...(this.useProxy &&
+        this.proxy && {
+          proxy: {
+            server: `${this?.proxy?.host}:${this.proxy?.port}`,
+            username: this.proxy?.username as string,
+            password: this.proxy?.password as string,
+          },
+        }),
     })
 
-    const context = this.browser.defaultBrowserContext()
+    const context = await this.browser.newContext()
     this.page = await context.newPage()
 
-    if (this.useProxy) {
-      await this.page.authenticate({
-        username: this.proxy?.username as string,
-        password: this.proxy?.password as string,
-      })
-    }
-    await this.page.setViewport({
+    await this.page.setViewportSize({
       width: 1280,
       height: 743,
-      deviceScaleFactor: 1,
     })
 
     this.page.on('dialog', async (dialog) => await dialog.accept())
+  }
+
+  /**
+   * Adds an action (click) to the page.  (Simplified for Node.js)
+   * @param {string} selector
+   */
+  async add(selector: string): Promise<void> {
+    try {
+      await this.page?.click(selector)
+    } catch (error) {
+      console.error(
+        `Error clicking on element with selector "${selector}"`,
+        error,
+      )
+      throw error
+    }
   }
 
   getInnerText(selector: string): Promise<string> | undefined {
@@ -123,22 +145,6 @@ export class BotUtilities {
     } catch (error) {
       console.error('Error saving bot log:', error)
     }
-  }
-
-  async authenticateProxy(): Promise<void> {
-    if (
-      this.useProxy &&
-      this.proxy &&
-      this.proxy.username &&
-      this.proxy.password
-    ) {
-      await this?.page?.authenticate({
-        username: this.proxy.username,
-        password: this.proxy.password,
-      })
-    }
-
-    await this.saveBotLog() // You'd implement this method or stub it
   }
 
   /**
@@ -174,6 +180,27 @@ export class BotUtilities {
     if (this.order && this.proxy?.username) {
       this.order.proxy_username = this.proxy.username
       // TODO: Save the proxy username into Order DB table.
+    }
+  }
+
+  /**
+   * Executes randomized mouse movements.
+   */
+  async randomizedMouseMovements(): Promise<void> {
+    if (Math.random() < 0.5) {
+      //  Simplified the rand(0,1)
+      this.randomized_mouse_movements = 1
+      const moveTimes = random(3, 10)
+
+      for (let i = 0; i <= moveTimes; i++) {
+        try {
+          await this.page?.mouse.move(random(5, 320), random(400, 820))
+          await sleep(random(100, 600))
+        } catch (error) {
+          console.error('Error during mouse movement', error)
+          // throw error;
+        }
+      }
     }
   }
 
@@ -259,23 +286,6 @@ export class BotUtilities {
   }
 
   /**
-   * Click on an element
-   * @param selector
-   * @param clickCount
-   */
-  async click(selector: string, clickCount: number = 1): Promise<void> {
-    await this.elementExists(selector)
-    try {
-      await this.page?.click(selector, {
-        clickCount,
-        delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20,
-      })
-    } catch (error) {
-      this.endExecution('Node Exception')
-    }
-  }
-
-  /**
    * Type text inside element
    * @param selector
    * @param text
@@ -312,7 +322,7 @@ export class BotUtilities {
   async select(selector: string, value: string): Promise<void> {
     await this.elementExists(selector)
     try {
-      await this.page?.select(selector, value)
+      await this.page?.selectOption(selector, value)
     } catch (error) {
       this.endExecution('Node Exception')
     }
@@ -325,7 +335,8 @@ export class BotUtilities {
    */
   async selectByLabel(selector: string, label: string): Promise<void> {
     await this.page?.evaluate(
-      (sel, lbl) => {
+      (args: { sel: string; lbl: string }) => {
+        const { sel, lbl } = args
         const select = document.querySelector(sel) as HTMLSelectElement
         if (!select) return
         for (let i = 0; i < select.options.length; i++) {
@@ -338,8 +349,7 @@ export class BotUtilities {
           }
         }
       },
-      selector,
-      label,
+      { sel: selector, lbl: label },
     )
   }
 
@@ -370,6 +380,23 @@ export class BotUtilities {
       } else {
         break
       }
+    }
+  }
+
+  /**
+   * Click on an element
+   * @param selector
+   * @param clickCount
+   */
+  async click(selector: string, clickCount: number = 1): Promise<void> {
+    await this.elementExists(selector)
+    try {
+      await this.page?.click(selector, {
+        clickCount,
+        delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20,
+      })
+    } catch (error) {
+      this.endExecution('Node Exception')
     }
   }
 
