@@ -59,6 +59,19 @@ export class HelperService {
     return value.replace(/\D/g, '')
   }
 
+  /**
+   * Format zip code
+   * @param {string} zip_code
+   * @returns {string}
+   */
+  static formatZipCode(zip_code: string): string {
+    const removeSpaces = zip_code.replace(/\s+/g, '')
+    const removeDashes = removeSpaces.replace(/-/g, '')
+    const toUpperCase = removeDashes.toUpperCase()
+
+    return toUpperCase
+  }
+
   static async encrypt(value: string, kmsKeyId: string): Promise<string> {
     const client = new KMSClient({ credentials: fromEnv() })
     const command = new EncryptCommand({
@@ -114,7 +127,7 @@ export class HelperService {
       const formatted = this.titleCase(state)
       const found = Object.entries(states).find(
         // eslint-disable-next-line
-        ([_, name]) => name === formatted
+        ([_, name]) => name === formatted,
       )
       return found ? found[0] : false
     }
@@ -152,7 +165,7 @@ export class HelperService {
       const upper = name.toUpperCase()
       const found = Object.entries(countries).find(
         // eslint-disable-next-line
-        ([_, full]) => (full as string)?.toUpperCase() === upper
+        ([_, full]) => (full as string)?.toUpperCase() === upper,
       )
       return found ? found[0] : false
     }

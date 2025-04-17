@@ -33,7 +33,7 @@ export class BotUtilities {
   randomized_mouse_movements = 0
   // DOB / Years variables
   protected dob: number | null = null
-  protected minimumYears: number | null = null
+  protected minimumYears: number = 0
   protected minimumYears_18: number | null = null
   useProxy: boolean
   test: boolean = false
@@ -474,17 +474,23 @@ export class BotUtilities {
    * Check if element exists or exit execution if not found
    * @param selector - CSS selector
    */
-  async elementExists(selector: string): Promise<void> {
+  async elementExists(selector: string): Promise<boolean | void> {
     try {
       let element = await this.page?.$(selector)
       if (!element) {
         await new Promise((resolve) => setTimeout(resolve, 5000))
         element = await this.page?.$(selector)
         if (!element) this.endExecution('Element Not Found')
+
+        return true
       }
     } catch {
       this.endExecution('Node Exception')
     }
+  }
+
+  async clickAndNext(page: Page) {
+    await page.click('button.btn-primary[type="submit"]')
   }
 
   /**

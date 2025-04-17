@@ -1,18 +1,22 @@
-import { chromium } from 'playwright-extra'
 import { Browser, LaunchOptions, Page } from 'playwright'
-import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import { chromium } from 'playwright-extra'
 import RecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha'
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import { config } from '../config'
 
 chromium.use(StealthPlugin())
-chromium.use(
-  RecaptchaPlugin({
-    provider: {
-      id: '2captcha',
-      token: config('TWOCAPTCHA_TOKEN') || 'YOUR_API_KEY',
-    },
-  }),
-)
+
+const TWOCAPTCHA_TOKEN = config('TWOCAPTCHA_TOKEN')
+if (TWOCAPTCHA_TOKEN)
+  chromium.use(
+    RecaptchaPlugin({
+      provider: {
+        id: '2captcha',
+        token: config('TWOCAPTCHA_TOKEN'),
+      },
+    }),
+  )
+
 /**
  *
  * @param proxy
