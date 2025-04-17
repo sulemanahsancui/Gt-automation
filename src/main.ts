@@ -6,7 +6,7 @@ async function run() {
   const browser = await newBrowser({
     // headless: config('NODE_ENV') == 'development' ? false : true,
     headless: false,
-    args: BROWSER_ARGS
+    args: BROWSER_ARGS,
   })
   const context = await browser.newContext()
   const page = await context.newPage()
