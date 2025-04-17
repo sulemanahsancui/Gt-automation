@@ -1157,3 +1157,19 @@ export const BUSINESS_NAMES = {
   SENTRI: 'sentri',
   'TSA Pre-Check': 'pretsa',
 }
+
+export const BROWSER_ARGS = [
+  '--incognito',
+  '--no-sandbox',
+  '--disable-gpu',
+  '--disable-setuid-sandbox',
+  '--disable-infobars',
+  '--window-position=0,0',
+  '--disable-dev-shm-usage',
+  '--ignore-certificate-errors',
+  '--ignore-certificate-errors-spki-list',
+  '--lang=en-US',
+  '--disable-web-security',
+  '--disable-features=IsolateOrigins,site-per-process',
+  //'--user-agent=' . $profile.user_agent
+]

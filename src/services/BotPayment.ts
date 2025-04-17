@@ -1,9 +1,32 @@
 import fetch from 'node-fetch'
 import { Page } from 'playwright'
 import { config } from '../config'
-import { Formatter, sleepRandom } from '../lib'
+import {
+  ACCOUNT_HOLDER_SELECTOR,
+  ACCOUNT_NUMBER_SELECTOR,
+  BILLING_ADDRESS_SELECTOR,
+  CHOOSE_PC_SELECTOR,
+  CITY_SELECTOR,
+  COMFIRM_BTN_SELECTOR,
+  COUNTRY_SELECTOR,
+  CVV_SELECTOR,
+  EXPIRATION_MONTH_SELECTOR,
+  EXPIRATION_YEAR_SELECTOR,
+  Formatter,
+  PAY_BUTTOnN_PART_SELECTOR,
+  PAYMENTNOTICE_EXISTS_SELECTOR,
+  sleepRandom,
+  ZIP_CODE_SELECTOR,
+} from '../lib'
 import { BotUtilities } from './BotUtilities'
 import { HelperService } from './HelperService'
+import {
+  DASHBOARD_PAGE_URL,
+  PAYMENt_PAGE_1_URL,
+  PAYMENT_PAGE_2_URL,
+  PAYMENT_PAGE_3_URL,
+  PAYMENT_PAGE_4_URL,
+} from '../lib/constants'
 
 export class BotPaymentService extends BotUtilities {
   alreadyPaid: boolean
@@ -36,32 +59,31 @@ export class BotPaymentService extends BotUtilities {
     await sleepRandom()
 
     // Check if page correct
-    if (!(await this.rightPage('https://ttp.cbp.dhs.gov/purchase-summary')))
-      return false
+    if (!(await this.rightPage(PAYMENt_PAGE_1_URL))) return false
 
     // Check if payment is requirement
     const paymentNoticeExists = await this.elementExistsContinue(
-      'label[for="paymentNotice"]',
+      PAYMENTNOTICE_EXISTS_SELECTOR,
     )
 
     if (!paymentNoticeExists) {
-      await this.click('.pay-button-part button')
+      await this.click(PAY_BUTTOnN_PART_SELECTOR)
       this.paymentNotRequired = true
       await this.sleepRandom(true)
       return true
     }
 
     // Wait for element to load
-    await this.waitForElement('label[for="paymentNotice"]')
+    await this.waitForElement(PAYMENTNOTICE_EXISTS_SELECTOR)
 
-    await this.click('label[for="paymentNotice"]')
+    await this.click(PAYMENTNOTICE_EXISTS_SELECTOR)
     await this.sleepRandom(true)
 
-    await this.click('.pay-button-part button')
+    await this.click(PAY_BUTTOnN_PART_SELECTOR)
     await this.sleepRandom(true)
 
     // Click on Confirm button
-    await this.clickButtonAndNext('#confirmBtn')
+    await this.clickButtonAndNext(COMFIRM_BTN_SELECTOR)
   }
 
   // -------------------------------------------------------------------------------------
@@ -79,17 +101,15 @@ export class BotPaymentService extends BotUtilities {
     await this.sleepRandom()
 
     // Check if page correct
-    const right_page = await this.rightPage(
-      'https://www.pay.gov/tcsonline/payment.do?execution=e1s1',
-    )
+    const right_page = await this.rightPage(PAYMENT_PAGE_2_URL)
     if (!right_page) return false
 
     await this.sleepRandom()
 
     // Wait for element to load
-    await this.waitForElement('label[for="choosePC"]')
+    await this.waitForElement(CHOOSE_PC_SELECTOR)
 
-    await this.click('label[for="choosePC"]')
+    await this.click(CHOOSE_PC_SELECTOR)
     await this.sleepRandom(true)
 
     // Click on Continue button
@@ -103,13 +123,10 @@ export class BotPaymentService extends BotUtilities {
 
     await this.sleepRandom()
 
-    const rightPage = await this.rightPage(
-      'https://www.pay.gov/tcsonline/payment.do',
-      false,
-    )
+    const rightPage = await this.rightPage(PAYMENT_PAGE_3_URL, false)
     if (!rightPage) return false
 
-    await this.waitForElement('#accountHolderName')
+    await this.waitForElement(ACCOUNT_HOLDER_SELECTOR)
 
     let randomCard: any
     if (this.order.sourceUrl === 'ge.govassist.com') {
@@ -181,11 +198,17 @@ export class BotPaymentService extends BotUtilities {
       cardholderName = this.order.name
     }
 
-    await this.type('#accountHolderName', cardholderName)
-    await this.type('#billingAddress', this.formatter.formatAddress(address))
-    await this.type('#city', this.formatter.formatCity(city))
-    await this.select('#country', allCountries[country] as unknown as string)
-    await this.type('#zipPostalCode', this.formatter.formatZipCode(zipCode))
+    await this.type(ACCOUNT_HOLDER_SELECTOR, cardholderName)
+    await this.type(
+      BILLING_ADDRESS_SELECTOR,
+      this.formatter.formatAddress(address),
+    )
+    await this.type(CITY_SELECTOR, this.formatter.formatCity(city))
+    await this.select(
+      COUNTRY_SELECTOR,
+      allCountries[country] as unknown as string,
+    )
+    await this.type(ZIP_CODE_SELECTOR, this.formatter.formatZipCode(zipCode))
 
     switch (country) {
       case 'US':
@@ -228,10 +251,10 @@ export class BotPaymentService extends BotUtilities {
       cvv = await HelperService.decrypt(this.order.payment.cc_cvv)
     }
 
-    await this.type('#accountNumber', creditCard)
-    await this.select('#expirationMonth', expirationMonth)
-    await this.select('#expirationYear', expirationYear)
-    await this.type('#cardSecurityCode', cvv)
+    await this.type(ACCOUNT_NUMBER_SELECTOR, creditCard)
+    await this.select(EXPIRATION_MONTH_SELECTOR, expirationMonth)
+    await this.select(EXPIRATION_YEAR_SELECTOR, expirationYear)
+    await this.type(CVV_SELECTOR, cvv)
 
     await this.clickButtonAndNext(this.continueButton)
 
@@ -280,10 +303,7 @@ export class BotPaymentService extends BotUtilities {
 
     await this.sleepRandom()
 
-    const rightPage = await this.rightPage(
-      'https://www.pay.gov/tcsonline/payment.do',
-      false,
-    )
+    const rightPage = await this.rightPage(PAYMENT_PAGE_4_URL, false)
     if (!rightPage) return false
 
     await this.waitForElement('label[for="authCheck"]')
@@ -299,7 +319,7 @@ export class BotPaymentService extends BotUtilities {
       await this.page
         ?.waitForURL(this.page.url(), {
           waitUntil: 'domcontentloaded',
-          timeout: 30000,
+          timeout: 0,
         })
         .catch(() => {})
     }
@@ -308,7 +328,7 @@ export class BotPaymentService extends BotUtilities {
     await this.page?.waitForTimeout(30_000)
 
     // Ensure we are on the correct dashboard page
-    const rightPage = await this.rightPage('https://ttp.cbp.dhs.gov/dashboard')
+    const rightPage = await this.rightPage(DASHBOARD_PAGE_URL)
     if (!rightPage) return
 
     // Get message

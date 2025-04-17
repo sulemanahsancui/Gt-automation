@@ -3,15 +3,25 @@ import { Page } from 'playwright'
 
 import {
   BUTTON_USA_SELECTOR,
-  BUTTON_USA_WIDE,
+  BUTTON_USA_WIDE_SELECTOR,
   LOGIN_BUTTON_SELECTOR,
   LOGIN_MODEL_FOOTER_SELECTOR,
+  ONE_TIME_CODE_INPUT_SELECTOR,
   Order,
+  SECOND_MFA_PAGE_BUTTON_SELECTOR,
   sleepRandom,
   USER_EMAIL_INPUT_SELECTOR,
   USER_PASSWORD_INPUT_SELECTOR,
 } from '../lib'
 import { BotUtilities } from './BotUtilities'
+import {
+  LOGIN_PAGE_1_URL,
+  LOGIN_PAGE_2_URL,
+  LOGIN_PAGE_3_URL,
+  LOGIN_PAGE_COMPLETED_URL,
+  SECOND_MFA_PAGE_URL,
+  TWO_FACTOR_AUTHENTICATION_URL,
+} from '../lib/constants'
 
 export class BotLoginService extends BotUtilities {
   captcha_min_score = 0
@@ -35,7 +45,7 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom()
 
     // Check if page correct
-    const rightPage = await this.rightPage('https://ttp.cbp.dhs.gov/')
+    const rightPage = await this.rightPage(LOGIN_PAGE_1_URL)
     if (!rightPage) return false
 
     // Wait for element to load
@@ -61,7 +71,7 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom()
 
     // Check if page correct
-    const rightPage = await this.rightPage('https://secure.login.gov/', false)
+    const rightPage = await this.rightPage(LOGIN_PAGE_2_URL, false)
     if (!rightPage) return false
 
     // Wait for element to load
@@ -96,25 +106,19 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom(true)
 
     // Check if terms have changed
-    const termsPage = await this.rightPage(
-      'https://secure.login.gov/rules_of_use',
-      true,
-      true,
-    )
+    const termsPage = await this.rightPage(LOGIN_PAGE_3_URL, true, true)
     if (termsPage) {
       await this.click('label[for="rules_of_use_form_terms_accepted"]')
-      await this.clickButtonAndNext('.usa-button')
+      await this.clickButtonAndNext(BUTTON_USA_SELECTOR)
       await sleepRandom(true)
     }
 
     // Check if page correct
-    const rightPage = await this.rightPage(
-      'https://secure.login.gov/login/two_factor/authenticator',
-    )
+    const rightPage = await this.rightPage(TWO_FACTOR_AUTHENTICATION_URL)
     if (!rightPage) return false
 
     // Wait for element to load
-    await this.waitForElement('.one-time-code-input__input')
+    await this.waitForElement(ONE_TIME_CODE_INPUT_SELECTOR)
 
     // Generate login code
     const totp = new OTPAuth.TOTP({
@@ -125,7 +129,7 @@ export class BotLoginService extends BotUtilities {
     const loginCode = totp.generate()
 
     // Enter 2 Factor Code
-    await this.type('.one-time-code-input__input', loginCode)
+    await this.type(ONE_TIME_CODE_INPUT_SELECTOR, loginCode)
 
     // Don't remember this browser
     // await this.click('label[for="remember_device"]');
@@ -137,29 +141,23 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom(true)
 
     // Check if second MFA reminder page
-    const secondMfaPage = await this.rightPage(
-      'https://secure.login.gov/second_mfa_reminder',
-      true,
-      true,
-    )
+    const secondMfaPage = await this.rightPage(SECOND_MFA_PAGE_URL, true, true)
     if (secondMfaPage) {
       // Click continue
-      await this.clickButtonAndNext(
-        'div.grid-row form:nth-of-type(2) button.usa-button',
-      )
+      await this.clickButtonAndNext(SECOND_MFA_PAGE_BUTTON_SELECTOR)
       // Sleep
       await sleepRandom(true)
     }
 
     // If sign up completed page
     const signUpCompletedPage = await this.rightPage(
-      'https://secure.login.gov/sign_up/completed',
+      LOGIN_PAGE_COMPLETED_URL,
       true,
       true,
     )
     if (signUpCompletedPage) {
       // Click continue
-      await this.clickButtonAndNext(BUTTON_USA_WIDE)
+      await this.clickButtonAndNext(BUTTON_USA_WIDE_SELECTOR)
     }
     return true
   }
