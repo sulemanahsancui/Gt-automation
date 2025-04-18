@@ -16,13 +16,13 @@ import { IP_CHECK_URL } from '../lib/constants'
 
 export class BotUtilities {
   // Basic properties
-  protected order: any = null
-  protected page: Page | null = null
+  order: any = null
+  page: Page | null = null
   protected puppeteer: Browser | null = null
   protected browser: Browser | null = null
-  protected stop = false
+  stop = false
   protected pageCount = 1
-  protected botType: any
+  botType: any
   // Keep track of crawl variables
   protected proxy: ProxyCredentials | null = null
   protected profile: any | null = null

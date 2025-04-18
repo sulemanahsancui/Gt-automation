@@ -23,16 +23,17 @@ import {
   TWO_FACTOR_AUTHENTICATION_URL,
 } from '../lib/constants'
 
-export class BotLoginService extends BotUtilities {
+export class BotLoginService {
   captcha_min_score = 0
-
+  private botUtils: BotUtilities
   /**
    * Initializes the BotLogin module with the Playwright page object.
    * @param {playwright.Page} page
    * @param {object} order
    */
   constructor(page: Page, order: Order) {
-    super(false, page, null, null, order)
+    // super(false, page, null, null, order)
+    this.botUtils = new BotUtilities(false, page, null, null, order)
   }
 
   // -------------------------------------------------------------------------------------
@@ -45,19 +46,19 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom()
 
     // Check if page correct
-    const rightPage = await this.rightPage(LOGIN_PAGE_1_URL)
+    const rightPage = await this.botUtils.rightPage(LOGIN_PAGE_1_URL)
     if (!rightPage) return false
 
     // Wait for element to load
-    await this.waitForElement(LOGIN_BUTTON_SELECTOR)
+    await this.botUtils.waitForElement(LOGIN_BUTTON_SELECTOR)
 
     // Click on Login button
-    await this.add(LOGIN_BUTTON_SELECTOR)
+    await this.botUtils.add(LOGIN_BUTTON_SELECTOR)
 
     await sleepRandom(true)
 
     // Click on Consent and Continue
-    await this.clickButtonAndNext(LOGIN_MODEL_FOOTER_SELECTOR)
+    await this.botUtils.clickButtonAndNext(LOGIN_MODEL_FOOTER_SELECTOR)
     return true
   }
 
@@ -71,28 +72,28 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom()
 
     // Check if page correct
-    const rightPage = await this.rightPage(LOGIN_PAGE_2_URL, false)
+    const rightPage = await this.botUtils.rightPage(LOGIN_PAGE_2_URL, false)
     if (!rightPage) return false
 
     // Wait for element to load
-    await this.waitForElement(USER_EMAIL_INPUT_SELECTOR)
+    await this.botUtils.waitForElement(USER_EMAIL_INPUT_SELECTOR)
 
     // Randomized mouse movements
-    await this.randomizedMouseMovements()
+    await this.botUtils.randomizedMouseMovements()
 
     // Enter login info
-    await this.type(
+    await this.botUtils.type(
       USER_EMAIL_INPUT_SELECTOR,
-      this.order?.login_email as string,
+      this.botUtils.order?.login_email as string,
     )
-    await this.type(
+    await this.botUtils.type(
       USER_PASSWORD_INPUT_SELECTOR,
-      this.order?.login_pass as string,
+      this.botUtils.order?.login_pass as string,
     )
     //TODO:IF STEALTH PLUGIN DIDNT WORK USE THIRD PARTY
 
     // Click on Login button
-    await this.clickButtonAndNext(BUTTON_USA_SELECTOR)
+    await this.botUtils.clickButtonAndNext(BUTTON_USA_SELECTOR)
     return true
   }
 
@@ -106,58 +107,68 @@ export class BotLoginService extends BotUtilities {
     await sleepRandom(true)
 
     // Check if terms have changed
-    const termsPage = await this.rightPage(LOGIN_PAGE_3_URL, true, true)
+    const termsPage = await this.botUtils.rightPage(
+      LOGIN_PAGE_3_URL,
+      true,
+      true,
+    )
     if (termsPage) {
-      await this.click('label[for="rules_of_use_form_terms_accepted"]')
-      await this.clickButtonAndNext(BUTTON_USA_SELECTOR)
+      await this.botUtils.click('label[for="rules_of_use_form_terms_accepted"]')
+      await this.botUtils.clickButtonAndNext(BUTTON_USA_SELECTOR)
       await sleepRandom(true)
     }
 
     // Check if page correct
-    const rightPage = await this.rightPage(TWO_FACTOR_AUTHENTICATION_URL)
+    const rightPage = await this.botUtils.rightPage(
+      TWO_FACTOR_AUTHENTICATION_URL,
+    )
     if (!rightPage) return false
 
     // Wait for element to load
-    await this.waitForElement(ONE_TIME_CODE_INPUT_SELECTOR)
+    await this.botUtils.waitForElement(ONE_TIME_CODE_INPUT_SELECTOR)
 
     // Generate login code
     const totp = new OTPAuth.TOTP({
-      secret: this.order?.login_auth_key,
+      secret: this.botUtils.order?.login_auth_key,
       digits: 6,
       algorithm: 'SHA1',
     })
     const loginCode = totp.generate()
 
     // Enter 2 Factor Code
-    await this.type(ONE_TIME_CODE_INPUT_SELECTOR, loginCode)
+    await this.botUtils.type(ONE_TIME_CODE_INPUT_SELECTOR, loginCode)
 
     // Don't remember this browser
     // await this.click('label[for="remember_device"]');
 
     // Click continue
-    await this.clickButtonAndNext(BUTTON_USA_SELECTOR)
+    await this.botUtils.clickButtonAndNext(BUTTON_USA_SELECTOR)
 
     // Sleep
     await sleepRandom(true)
 
     // Check if second MFA reminder page
-    const secondMfaPage = await this.rightPage(SECOND_MFA_PAGE_URL, true, true)
+    const secondMfaPage = await this.botUtils.rightPage(
+      SECOND_MFA_PAGE_URL,
+      true,
+      true,
+    )
     if (secondMfaPage) {
       // Click continue
-      await this.clickButtonAndNext(SECOND_MFA_PAGE_BUTTON_SELECTOR)
+      await this.botUtils.clickButtonAndNext(SECOND_MFA_PAGE_BUTTON_SELECTOR)
       // Sleep
       await sleepRandom(true)
     }
 
     // If sign up completed page
-    const signUpCompletedPage = await this.rightPage(
+    const signUpCompletedPage = await this.botUtils.rightPage(
       LOGIN_PAGE_COMPLETED_URL,
       true,
       true,
     )
     if (signUpCompletedPage) {
       // Click continue
-      await this.clickButtonAndNext(BUTTON_USA_WIDE_SELECTOR)
+      await this.botUtils.clickButtonAndNext(BUTTON_USA_WIDE_SELECTOR)
     }
     return true
   }
