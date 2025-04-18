@@ -11,13 +11,11 @@ async function run() {
   const context = await browser.newContext()
   const page = await context.newPage()
 
-  const botUtility_instance = new BotUtilities(false, page, null, browser, null)
+  const botApp = new BotSubmitApplication(page, null)
 
-  await page.setViewportSize(botUtility_instance.getRandomScreenSize())
+  await page.setViewportSize(botApp.getRandomScreenSize())
 
   page.on('dialog', async (dialog) => await dialog.accept())
-
-  const botApp = new BotSubmitApplication(page, null)
 
   console.log({ botApp })
 

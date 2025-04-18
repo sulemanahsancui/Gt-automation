@@ -6,12 +6,14 @@ import {
   logger,
   sleep,
   sleepRandom,
+  STATUSES,
 } from '../lib'
 import { BotLoginService } from './BotLogin'
 import { BotPaymentService } from './BotPayment'
 import { BotUtilities } from './BotUtilities'
 import { HelperService } from './HelperService'
 import { OrderService } from './Order'
+import moment from 'moment'
 
 export class BotSubmitApplication extends BotUtilities {
   botLoginService: BotLoginService
@@ -27,6 +29,9 @@ export class BotSubmitApplication extends BotUtilities {
   previousAddressEndedMonth: any
   previousAddressEndedYear = null
   formatter: Formatter
+
+  previousJobEndedMonth: any
+  previousJobEndedYear: any
 
   constructor(
     page: Page,
@@ -417,7 +422,7 @@ export class BotSubmitApplication extends BotUtilities {
         await this.page?.click('label[for="globalEntry"]')
         await this.sleepRandom(true)
 
-        if (this.order.details.plan_flying_internationally === 1) {
+        if (this.order?.details.plan_flying_internationally === 1) {
           await this.page?.click('label[for="imminentIntlTravelYes"]')
         } else {
           await this.page?.click('label[for="imminentIntlTravelNo"]')
@@ -1464,6 +1469,1139 @@ export class BotSubmitApplication extends BotUtilities {
     const addressVerificationExists = await this.page?.isVisible('#acceptOptCa')
     if (addressVerificationExists) {
       // Address verification logic here...
+    }
+  }
+
+  /**
+   * Search for occupation name and return status if found
+   */
+  getEmploymentStatusFromOccupation(occupation: string): number {
+    const statuses: Record<number, string> = {
+      0: 'employed',
+      1: 'selfemployed',
+      2: 'retired',
+      3: 'unemployed',
+      4: 'student',
+    }
+
+    // Remove non-alphabet characters and convert to lowercase
+    const sanitizedOccupation = occupation.replace(/[^a-z]/gi, '').toLowerCase()
+
+    // Check if occupation exists in statuses
+    const statusIndex = Object.values(statuses).indexOf(sanitizedOccupation)
+
+    // If found, return the index, else return 0
+    return statusIndex !== -1 ? statusIndex : 0
+  }
+
+  /**
+   * Select correct employment status
+   * @param status - Current employment status
+   * @param occupation - Occupation name
+   * @returns Correct employment status
+   */
+  selectCorrectEmploymentStatus(status: number, occupation: string): number {
+    // Get the employment status from the occupation
+    const occupationStatus = this.getEmploymentStatusFromOccupation(occupation)
+
+    // Return status if it's not 0, otherwise check the occupation status
+    if (status !== 0) {
+      return status
+    } else if (status !== occupationStatus) {
+      return occupationStatus
+    } else {
+      return status
+    }
+  }
+
+  isChildApplication(
+    orderType: number,
+    dob: number,
+    minimumYears: number,
+  ): boolean {
+    const childTypes = [2, 3, 6, 7, 10, 11]
+
+    if (
+      childTypes.includes(orderType) &&
+      moment(dob).isAfter(moment(minimumYears))
+    ) {
+      return true
+    }
+
+    return false
+  }
+
+  async fillEmployment2Details(
+    order: any,
+    employmentIndex: number,
+  ): Promise<void> {
+    // Employment 2
+    if (order?.details?.employment?.employer_from_date_2) {
+      employmentIndex++
+      await this.click('#addEmploymentButton')
+      await this.sleepRandom(true)
+
+      await this.click(`label#current${employmentIndex}`)
+
+      // Select correct employee status
+      let employmentStatus2 = this.selectCorrectEmploymentStatus(
+        order?.details?.employment?.employment_status_2,
+        order?.details?.employment?.employer_occupation_2,
+      )
+      employmentStatus2 = STATUSES[employmentStatus2] as any
+      await this.select(`#status${employmentIndex}`, employmentStatus2 as any)
+      await this.sleepRandom(true)
+
+      const employerFrom2 =
+        order?.details?.employment?.employer_from_date_2.split('/')
+      const employerFromMonth2 = this.getCorrectMonth(employerFrom2[0])
+      const employerFromYear2 = employerFrom2[1]
+
+      this.previousJobEndedMonth = employerFromMonth2
+      this.previousJobEndedYear = employerFromYear2
+
+      await this.selectByLabel(
+        `#startMonth${employmentIndex}`,
+        employerFromMonth2,
+      )
+      await this.sleepRandom(true)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.type(`#startYear${employmentIndex}`, employerFromYear2)
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.sleepRandom(true)
+
+      await this.selectByLabel(
+        `#endMonthDiv${employmentIndex} select[name='endMonth']`,
+        this.previousJobEndedMonth,
+      )
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.sleepRandom(true)
+
+      await this.type(
+        `#endMonthDiv${employmentIndex} input[name='endYear']`,
+        this.previousJobEndedYear,
+      )
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.sleepRandom(true)
+
+      // If employed or self-employed, we need all the details
+      if ([0, 1].includes(order?.details?.employment?.employment_status_2)) {
+        let employerCountry2 = ''
+
+        if (order?.details?.employment?.employer_country_5 === 'HK') {
+          employerCountry2 = (await this.getCorrectCountryAddressAndEmployment(
+            'CH',
+          )) as string
+        } else {
+          employerCountry2 = (await this.getCorrectCountryAddressAndEmployment(
+            order?.details?.employment?.employer_country_2,
+          )) as string
+        }
+
+        await this.select(`#country${employmentIndex}`, employerCountry2)
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#addressLine1${employmentIndex}`,
+          this.formatter.formatAddress(
+            order?.details?.employment?.employer_street_2,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#city${employmentIndex}`,
+          this.formatter.formatCity(
+            order?.details?.employment?.employer_city_2,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#zip${employmentIndex}`,
+          this.formatter.formatZipCode(
+            order?.details?.employment?.employer_zip_code_2,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        switch (order?.details?.employment?.employer_country_2) {
+          case 'US':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectState(
+                order?.details?.employment?.employer_state_2 as string,
+              ) as string,
+            )
+            break
+
+          case 'CA':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectCanadaState(
+                order?.details?.employment?.employer_state_2,
+              ) as string,
+            )
+            break
+
+          case 'MX':
+            const employerState =
+              order?.details?.employment?.employer_state_2 === 'CMX'
+                ? 'MEX'
+                : order?.details?.employment?.employer_state_2
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectMexicoState(employerState) as string,
+            )
+            break
+
+          default:
+            await this.type(
+              `#stateName${employmentIndex}`,
+              order?.details?.employment?.employer_state_2,
+              true,
+            )
+        }
+
+        await this.sleepRandom(true)
+
+        let phoneFormat2 = 'I' // Default
+        if (
+          order?.details?.employment?.employer_country_2 === 'US' ||
+          order?.details?.employment?.employer_country_2 === 'CA'
+        ) {
+          phoneFormat2 = 'N'
+        } else if (order?.details?.employment?.employer_country_2 === 'MX') {
+          phoneFormat2 = 'M'
+        }
+
+        await this.type(
+          `#occupation${employmentIndex}`,
+          this.formatter.formatBasic(
+            order?.details?.employment?.employer_occupation_2,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#employer${employmentIndex}`,
+          this.formatter.formatBasic(
+            order?.details?.employment?.employer_employer_2,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        // If international calling code
+        if (phoneFormat2 === 'I') {
+          const callingCode = (
+            HelperService.getCountryCallingCodes() as Record<string, number>
+          )[order?.details?.employment?.employer_country_2 as string]
+          await this.type(`#countryCode${employmentIndex}`, callingCode)
+        }
+
+        await this.sleepRandom(true)
+      }
+    }
+  }
+
+  async fillEmploymentDetails(order: any): Promise<void> {
+    // If employed or self-employed, we need all the details
+    if ([0, 1].includes(order?.details?.employment?.employment_status_1)) {
+      let employerCountry1 = ''
+
+      if (order.details.employment.employer_country_1 === 'HK') {
+        employerCountry1 = (await this.getCorrectCountryAddressAndEmployment(
+          'CH',
+        )) as string
+      } else {
+        employerCountry1 = (await this.getCorrectCountryAddressAndEmployment(
+          order?.details?.employment?.employer_country_1,
+        )) as string
+      }
+
+      await this.select('#country0', employerCountry1)
+      await this.sleepRandom(true)
+
+      await this.type(
+        '#addressLine10',
+        this.formatter.formatAddress(
+          order?.details?.employment?.employer_street_1,
+        ),
+      )
+      await this.sleepRandom(true)
+
+      await this.type(
+        '#city0',
+        this.formatter.formatCity(order?.details?.employment?.employer_city_1),
+      )
+      await this.sleepRandom(true)
+
+      await this.type(
+        '#zip0',
+        this.formatter.formatZipCode(
+          order?.details?.employment?.employer_zip_code_1,
+        ),
+      )
+      await this.sleepRandom(true)
+
+      switch (order?.details?.employment?.employer_country_1) {
+        case 'US':
+          await this.select(
+            '#state0',
+            this.getCorrectState(
+              order?.details?.employment?.employer_state_1,
+            ) as string,
+          )
+          break
+
+        case 'CA':
+          await this.select(
+            '#state0',
+            this.getCorrectCanadaState(
+              order?.details?.employment?.employer_state_1,
+            ) as string,
+          )
+          break
+
+        case 'MX':
+          const employerState =
+            order?.details?.employment?.employer_state_1 === 'CMX'
+              ? 'MEX'
+              : order?.details?.employment?.employer_state_1
+          await this.select(
+            '#state0',
+            this.getCorrectMexicoState(employerState) as string,
+          )
+          break
+
+        default:
+          await this.type(
+            '#stateName0',
+            order?.details?.employment?.employer_state_1,
+            true,
+          )
+      }
+
+      await this.sleepRandom(true)
+
+      let phoneFormat1 = 'I' // Default
+      if (
+        order?.details?.employment?.employer_country_1 === 'US' ||
+        order?.details?.employment?.employer_country_1 === 'CA'
+      ) {
+        phoneFormat1 = 'N'
+      } else if (order?.details?.employment?.employer_country_1 === 'MX') {
+        phoneFormat1 = 'M'
+      }
+
+      await this.type(
+        '#occupation0',
+        this.formatter.formatBasic(
+          order?.details?.employment?.employer_occupation_1,
+        ),
+      )
+      await this.sleepRandom(true)
+
+      await this.type(
+        '#employer0',
+        this.formatter.formatBasic(
+          order?.details?.employment?.employer_employer_1,
+        ),
+      )
+      await this.sleepRandom(true)
+
+      await this.select('#phoneFormat0', phoneFormat1)
+      await this.sleepRandom(true)
+
+      await this.type(
+        '#phoneNumber0',
+        HelperService.removeNonNumeric(
+          order?.details?.employment?.employer_phone_number_1,
+        ),
+      )
+      await this.sleepRandom(true)
+
+      // If international calling code
+      if (phoneFormat1 === 'I') {
+        const callingCode = (
+          HelperService.getCountryCallingCodes() as Record<string, number>
+        )[order?.details?.employment?.employer_country_1]
+        await this.type('#countryCode0', callingCode)
+      }
+    }
+  }
+
+  async fillEmployment5Details(
+    order: any,
+    employmentIndex: number,
+  ): Promise<void> {
+    // Employment 5
+    if (order.details.employment.employer_from_date_5) {
+      await this.click('#addEmploymentButton')
+      employmentIndex++ // Increment the employment index
+
+      if (
+        !(await this.elementExistsContinue(`label#current${employmentIndex}`))
+      ) {
+        // If employment modal isn't open, click on 'Add employment' button to open it
+        await this.click('#addEmploymentButton')
+      }
+
+      await this.sleepRandom(true)
+      await sleep(30)
+
+      await this.click(`label#current${employmentIndex}`)
+      await sleep(10)
+
+      // Select correct employee status
+      let employmentStatus5 = this.selectCorrectEmploymentStatus(
+        order.details.employment.employment_status_5,
+        order.details.employment.employer_occupation_5,
+      )
+      employmentStatus5 = STATUSES[employmentStatus5] as any
+      await this.select(`#status${employmentIndex}`, employmentStatus5 as any)
+
+      await sleep(10)
+
+      const employerFrom5 =
+        order.details.employment.employer_from_date_5.split('/')
+      const employerFromMonth5 = this.getCorrectMonth(employerFrom5[0])
+      const employerFromYear5 = employerFrom5[1]
+
+      await this.selectByLabel(
+        `#startMonth${employmentIndex}`,
+        employerFromMonth5,
+      )
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+
+      await this.type(`#startYear${employmentIndex}`, employerFromYear5)
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+
+      await this.selectByLabel(
+        `#endMonthDiv${employmentIndex} select[name='endMonth']`,
+        this.previousJobEndedMonth,
+      )
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+
+      await this.type(
+        `#endMonthDiv${employmentIndex} input[name='endYear']`,
+        this.previousJobEndedYear,
+      )
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+
+      let employerCountry5 = ''
+
+      // If employed or self-employed, we need all the details
+      if ([0, 1].includes(order.details.employment.employment_status_5)) {
+        if (order.details.employment.employer_country_5 === 'HK') {
+          employerCountry5 = (await this.getCorrectCountryAddressAndEmployment(
+            'CH',
+          )) as string
+        } else {
+          employerCountry5 = (await this.getCorrectCountryAddressAndEmployment(
+            order.details.employment.employer_country_5,
+          )) as string
+        }
+
+        await this.select(`#country${employmentIndex}`, employerCountry5)
+        await sleep(10)
+
+        await this.type(
+          `#addressLine1${employmentIndex}`,
+          this.formatter.formatAddress(
+            order.details.employment.employer_street_5,
+          ),
+        )
+        await sleep(10)
+
+        await this.type(
+          `#city${employmentIndex}`,
+          this.formatter.formatCity(order.details.employment.employer_city_5),
+        )
+        await sleep(10)
+
+        await this.type(
+          `#zip${employmentIndex}`,
+          this.formatter.formatZipCode(
+            order.details.employment.employer_zip_code_5,
+          ),
+        )
+        await sleep(10)
+
+        switch (order.details.employment.employer_country_5) {
+          case 'US':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectState(
+                order.details.employment.employer_state_5,
+              ) as string,
+            )
+            break
+          case 'CA':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectCanadaState(
+                order.details.employment.employer_state_5,
+              ) as string,
+            )
+            break
+          case 'MX':
+            if (order.details.employment.employer_state_5 === 'CMX') {
+              await this.select(
+                `#state${employmentIndex}`,
+                this.getCorrectMexicoState('MEX') as string,
+              )
+            } else {
+              await this.select(
+                `#state${employmentIndex}`,
+                this.getCorrectMexicoState(
+                  order.details.employment.employer_state_5,
+                ) as string,
+              )
+            }
+            break
+          default:
+            await this.type(
+              `#stateName${employmentIndex}`,
+              order.details.employment.employer_state_5,
+              true,
+            )
+        }
+
+        await sleep(10)
+
+        let phoneFormat5 = 'I' // Default format
+        if (
+          order.details.employment.employer_country_5 === 'US' ||
+          order.details.employment.employer_country_5 === 'CA'
+        ) {
+          phoneFormat5 = 'N'
+        } else if (order.details.employment.employer_country_5 === 'MX') {
+          phoneFormat5 = 'M'
+        }
+
+        await sleep(10)
+
+        await this.click(`#editEmployment_${employmentIndex}`)
+        await sleep(10)
+
+        await this.type(
+          `#occupation${employmentIndex}`,
+          this.formatter.formatBasic(
+            order.details.employment.employer_occupation_5,
+          ),
+        )
+        await this.type(
+          `#employer${employmentIndex}`,
+          this.formatter.formatBasic(
+            order.details.employment.employer_employer_5,
+          ),
+        )
+        await sleep(10)
+
+        // If international calling code
+        // if (phoneFormat5 === 'I') {
+        //   const callingCode = await this.getCountryCallingCode(order.details.employment.employer_country_5);
+        //   await this.type(`#countryCode${employmentIndex}`, callingCode);
+        // }
+      }
+    }
+  }
+
+  async fillEmployment4Details(
+    order: any,
+    employmentIndex: number,
+  ): Promise<void> {
+    // Employment 4
+    if (order.details.employment.employer_from_date_4) {
+      await this.click('#addEmploymentButton')
+      employmentIndex++ // Increment the employment index
+
+      await this.sleepRandom(true)
+
+      if (
+        !(await this.elementExistsContinue(`label#current${employmentIndex}`))
+      ) {
+        // If employment modal isn't open, click on 'Add employment' button to open it
+        await this.click('#addEmploymentButton')
+      }
+      await this.click(`label#current${employmentIndex}`)
+
+      await this.sleepRandom(true)
+
+      // Select correct employee status
+      let employmentStatus4 = this.selectCorrectEmploymentStatus(
+        order.details.employment.employment_status_4,
+        order.details.employment.employer_occupation_4,
+      )
+      employmentStatus4 = STATUSES[employmentStatus4] as any
+      await this.select(`#status${employmentIndex}`, employmentStatus4 as any)
+
+      await this.sleepRandom(true)
+
+      const employerFrom4 =
+        order.details.employment.employer_from_date_4.split('/')
+      const employerFromMonth4 = this.getCorrectMonth(employerFrom4[0])
+      const employerFromYear4 = employerFrom4[1]
+
+      await this.selectByLabel(
+        `#startMonth${employmentIndex}`,
+        employerFromMonth4,
+      )
+      await this.click(`#editEmployment_${employmentIndex}`)
+
+      await this.sleepRandom(true)
+
+      await this.type(`#startYear${employmentIndex}`, employerFromYear4)
+      await this.sleepRandom(true)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.sleepRandom(true)
+
+      await this.selectByLabel(
+        `#endMonthDiv${employmentIndex} select[name='endMonth']`,
+        this.previousJobEndedMonth,
+      )
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.sleepRandom(true)
+
+      await this.type(
+        `#endMonthDiv${employmentIndex} input[name='endYear']`,
+        this.previousJobEndedYear,
+      )
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await this.sleepRandom(true)
+
+      this.previousJobEndedMonth = employerFromMonth4
+      this.previousJobEndedYear = employerFromYear4
+
+      // If employed or self-employed, we need all the details
+      if ([0, 1].includes(order.details.employment.employment_status_4)) {
+        let employerCountry4 = await this.getCorrectCountryAddressAndEmployment(
+          order.details.employment.employer_country_4,
+        )
+        let employerCountry5 = ''
+
+        if (order.details.employment.employer_country_4 === 'HK') {
+          employerCountry5 = (await this.getCorrectCountryAddressAndEmployment(
+            'CH',
+          )) as string
+        } else {
+          employerCountry5 = (await this.getCorrectCountryAddressAndEmployment(
+            order.details.employment.employer_country_4,
+          )) as string
+        }
+
+        await this.select(
+          `#country${employmentIndex}`,
+          employerCountry4 as string,
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#addressLine1${employmentIndex}`,
+          this.formatter.formatAddress(
+            order.details.employment.employer_street_4,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#city${employmentIndex}`,
+          this.formatter.formatCity(order.details.employment.employer_city_4),
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#zip${employmentIndex}`,
+          this.formatter.formatZipCode(
+            order.details.employment.employer_zip_code_4,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        switch (order.details.employment.employer_country_4) {
+          case 'US':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectState(
+                order.details.employment.employer_state_4,
+              ) as string,
+            )
+            break
+          case 'CA':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectCanadaState(
+                order.details.employment.employer_state_4,
+              ) as string,
+            )
+            break
+          case 'MX':
+            if (order.details.employment.employer_state_4 === 'CMX') {
+              await this.select(
+                `#state${employmentIndex}`,
+                this.getCorrectMexicoState('MEX') as string,
+              )
+            } else {
+              await this.select(
+                `#state${employmentIndex}`,
+                this.getCorrectMexicoState(
+                  order.details.employment.employer_state_4,
+                ) as string,
+              )
+            }
+            break
+          default:
+            await this.type(
+              `#stateName${employmentIndex}`,
+              order.details.employment.employer_state_4,
+              true,
+            )
+        }
+
+        await this.sleepRandom(true)
+
+        let phoneFormat4 = 'I' // Default format
+        if (
+          order.details.employment.employer_country_4 === 'US' ||
+          order.details.employment.employer_country_4 === 'CA'
+        ) {
+          phoneFormat4 = 'N'
+        } else if (order.details.employment.employer_country_4 === 'MX') {
+          phoneFormat4 = 'M'
+        }
+
+        await this.sleepRandom(true)
+
+        await this.click(`#editEmployment_${employmentIndex}`)
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#occupation${employmentIndex}`,
+          this.formatter.formatBasic(
+            order.details.employment.employer_occupation_4,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        await this.type(
+          `#employer${employmentIndex}`,
+          this.formatter.formatBasic(
+            order.details.employment.employer_employer_4,
+          ),
+        )
+        await this.sleepRandom(true)
+
+        // If international calling code
+        // if (phoneFormat4 === 'I') {
+        //   const callingCode = await this.getCountryCallingCode(order.details.employment.employer_country_4);
+        //   await this.type(`#countryCode${employmentIndex}`, callingCode);
+        //   await this.sleepRandom(true);
+        // }
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------------------
+  // Step 13: Employment
+  // -------------------------------------------------------------------------------------
+  // https://ttp.cbp.dhs.gov/application/110394684/employment-history
+  // -------------------------------------------------------------------------------------
+  async page_10() {
+    // Sleep
+    await this.sleepRandom()
+    let employmentIndex = 0
+    // If child application
+    // if (in_array($this->order->type, [2, 3, 6, 7, 10, 11]) && $this->dob->greaterThan($this->minimum_years)) {
+    // return true;
+    // }
+    if (
+      this.isChildApplication(
+        this.order.type,
+        this.dob as any,
+        this.minimumYears,
+      )
+    )
+      return true
+
+    // Check if page correct
+    const right_page = await this.rightPage(
+      `https://ttp.cbp.dhs.gov/application/${this.application_id}/employment-history`,
+    )
+    if (!right_page) return false
+
+    // Wait for element to load
+    await this.waitForElement('#addEmploymentButton')
+
+    if (
+      [1, 3, 5, 7, 9, 11].includes(this.order.type) ||
+      this.resumeApplication
+    ) {
+      for (let x = 9; x >= 0; x--) {
+        const selector = `#card${x}`
+        const exists = await this.elementExistsContinue(selector)
+
+        if (exists) {
+          await this.click(`${selector} .card-btns a:nth-child(2)`)
+          await this.page?.waitForTimeout(10000) // Equivalent of sleep(10)
+
+          const confirmExists = await this.elementExistsContinue(
+            '#confirmModal.show #confirmBtn',
+          )
+          if (confirmExists) {
+            await this.click('#confirmModal.show #confirmBtn')
+            await this.sleepRandom(true)
+          }
+        }
+      }
+    }
+
+    // -------------------------------
+    // Employment 1 - Current/Present
+    // -------------------------------
+    await this.click('#addEmploymentButton')
+
+    await this.sleepRandom(true)
+
+    const statuses: Record<number, string> = {
+      0: 'E', // Employed
+      1: 'F', // Self-Employed
+      2: 'R', // Retired
+      3: 'U', // Unemployed
+      4: 'S', // Student
+    }
+    // Select correct employee status
+    const employment_status = this.selectCorrectEmploymentStatus(
+      this.order?.details?.employment?.employment_status_1,
+      this?.order?.details?.employment?.employer_occupation_1,
+    )
+    const employment_status_1 = statuses[employment_status]
+    await this.select('#status0', employment_status_1)
+    await sleep(10)
+    const employer_from_1 =
+      this.order?.details?.employment?.employer_from_date_1.split('/')
+    const employer_from_month_1 = this.getCorrectMonth(employer_from_1[0])
+    const employer_from_year_1 = employer_from_1[1]
+
+    await this.selectByLabel('#startMonth0', employer_from_month_1)
+    await sleep(10)
+
+    await this.type('#startYear0', employer_from_year_1)
+    await sleep(10)
+
+    this.previousJobEndedMonth = employer_from_month_1
+    this.previousJobEndedYear = employer_from_year_1
+
+    await this.fillEmploymentDetails(this.order)
+
+    // --------------------------
+    // Employment 2
+    // --------------------------
+    await this.fillEmployment2Details(this.order, employmentIndex)
+
+    // --------------------------
+    // Employment 3
+    // --------------------------
+    if (this.order?.details?.employment?.employer_from_date_3) {
+      await this.click('#addEmploymentButton')
+      employmentIndex++ // Increment the employment index
+
+      await this.sleepRandom(true)
+      if (
+        !(await this.elementExistsContinue('label#current{$employmentIndex}'))
+      ) {
+        //If employment modal isn't open, click on 'Add employment' button to open it
+        await this.click('#addEmploymentButton')
+      }
+      await this.click(`label#current${employmentIndex}`)
+      await sleep(10)
+
+      // Select correct employee status
+      let employment_status_3: string | number =
+        this.selectCorrectEmploymentStatus(
+          this?.order?.details?.employment?.employment_status_3,
+          this.order?.details?.employment?.employer_occupation_3,
+        )
+      employment_status_3 = STATUSES[employment_status_3]
+      await this.select('#status{$employmentIndex}', employment_status_3)
+
+      let employer_from_3: string[] | number[] =
+        this?.order?.details?.employment?.employer_from_date_3.split('/')
+      const employer_from_month_3 = this.getCorrectMonth(
+        employer_from_3[0] as number,
+      )
+      const employer_from_year_3 = employer_from_3[1]
+      await sleep(10)
+      await this.selectByLabel(
+        `#startMonth${employmentIndex}`,
+        employer_from_month_3,
+      )
+      sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+      await this.type(`#startYear${employmentIndex}`, employer_from_year_3)
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+      await this.selectByLabel(
+        `#endMonthDiv${employmentIndex} select[name='endMonth']`,
+        this.previousJobEndedMonth,
+      )
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+      await this.type(
+        `#endMonthDiv${employmentIndex} input[name='endYear']`,
+        this.previousJobEndedYear,
+      )
+      await sleep(10)
+
+      await this.click(`#editEmployment_${employmentIndex}`)
+      await sleep(10)
+
+      this.previousJobEndedMonth = employer_from_month_3
+      this.previousJobEndedYear = employer_from_year_3
+
+      // If employed or self-employed, we need all the details
+      if (
+        [0, 1].includes(this?.order?.details?.employment?.employment_status_3)
+      ) {
+        let employer_country_3: string | undefined | false = ''
+        if (this.order.details?.employment?.employer_country_3 === 'HK') {
+          employer_country_3 = this.getCorrectCountryAddressAndEmployment(
+            'CH',
+          ) as string
+        } else {
+          employer_country_3 = this.getCorrectCountryAddressAndEmployment(
+            this.order.details?.employment?.employer_country_3,
+          )
+        }
+        await this.select(
+          `#country${employmentIndex}`,
+          employer_country_3 as string,
+        )
+        await sleep(10)
+        await this.type(
+          `#addressLine1${employmentIndex}`,
+          this.formatter.formatAddress(
+            this.order.details?.employment?.employer_street_3,
+          ),
+        )
+        await sleep(10)
+        await this.type(
+          `#city${employmentIndex}`,
+          this.formatter.formatCity(
+            this.order.details?.employment?.employer_city_3,
+          ),
+        )
+        await sleep(10)
+        await this.type(
+          `#zip${employmentIndex}`,
+          this.formatter.formatZipCode(
+            this.order?.details?.employment?.employer_zip_code_3,
+          ),
+        )
+        await sleep(10)
+
+        switch (this.order?.details?.employment?.employer_country_3) {
+          case 'US':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectState(
+                this.order?.details?.employment?.employer_state_3,
+              ) as string,
+            )
+            break
+          case 'CA':
+            await this.select(
+              `#state${employmentIndex}`,
+              this.getCorrectCanadaState(
+                this.order?.details?.employment?.employer_state_3,
+              ) as string,
+            )
+            break
+          case 'MX':
+            if (this.order?.details?.employment?.employer_state_3 == 'CMX') {
+              await this.select(
+                `#state${employmentIndex}`,
+                this.getCorrectMexicoState('MEX') as string,
+              )
+            } else {
+              await this.select(
+                `#state${employmentIndex}`,
+                this.getCorrectMexicoState(
+                  this.order?.details?.employment?.employer_state_3,
+                ) as string,
+              )
+            }
+            break
+          default:
+            await this.type(
+              `#stateName${employmentIndex}`,
+              this.order?.details?.employment?.employer_state_3,
+              true,
+            )
+        }
+        let phone_format_3 = ''
+        await sleep(10)
+        if (
+          this.order?.details.employment.employer_country_3 == 'US' ||
+          this.order?.details?.employment?.employer_country_3 == 'CA'
+        ) {
+          phone_format_3 = 'N'
+        } else if (
+          this.order?.details?.employment?.employer_country_3 == 'MX'
+        ) {
+          phone_format_3 = 'M'
+        } else {
+          phone_format_3 = 'I'
+        }
+
+        await this.type(
+          `#occupation${employmentIndex}`,
+          this.formatter.formatBasic(
+            this.order?.details?.employment?.employer_occupation_3,
+          ),
+        )
+        await sleep(10)
+        this.type(
+          `#employer${employmentIndex}`,
+          this.formatter.formatBasic(
+            this.order?.details?.employment?.employer_employer_3,
+          ),
+        )
+        await sleep(10)
+
+        // If international calling code
+        // if ($phone_format_3 == 'I') {
+        //     $calling_code = $this?.getCountryCallingCode($this->order->details->employment->employer_country_3);
+        //     $this->type("#countryCode{$employmentIndex}", $calling_code);
+        // }
+        await sleep(10)
+      }
+    }
+
+    // --------------------------
+    // Employment 4
+    // --------------------------
+    await this.fillEmployment4Details(this.order, employmentIndex)
+    // --------------------------
+    // Employment 5
+    // --------------------------
+
+    await this.fillEmployment5Details(this.order, employmentIndex)
+
+    // Click on next button
+    await this.click(this.button_next)
+
+    await this.sleepRandom(true)
+
+    let modal_exists = await this.elementExistsContinue(
+      'div#notifyInfo.show #notifyBtn',
+    )
+    if (modal_exists) {
+      await this.waitForElement('div#notifyInfo.show #notifyBtn')
+      await this.click('div#notifyInfo.show #notifyBtn')
+
+      await this.sleepRandom(true)
+      // Click on Next button
+    }
+    const same_page = await this.rightPage(
+      `https://ttp.cbp.dhs.gov/application/${this.application_id}/employment-history`,
+      true,
+      true,
+    )
+
+    const modal = await this.elementExistsContinue(
+      'div#notifyInfo.show #notifyBtn',
+    )
+    if (!modal && same_page) {
+      await this.clickButtonAndNext(
+        this.button_next,
+        false,
+        true,
+        `https://ttp.cbp.dhs.gov/application/${this.application_id}/employment-history`,
+      )
+      await this.sleepRandom(true)
+    }
+
+    await this.sleepRandom(true)
+    const same_page2 = await this.rightPage(
+      `https://ttp.cbp.dhs.gov/application/${this.application_id}/employment-history`,
+      true,
+      true,
+    )
+
+    // If still on same page due to error
+    if (same_page2) {
+      modal_exists = await this.elementExistsContinue(
+        'div#notifyInfo.show #notifyBtn',
+      )
+
+      if (modal_exists) {
+        // Click OK to verify address on modal
+        await this.click('div#notifyInfo.show #notifyBtn')
+
+        await this.sleepRandom(true)
+      }
+
+      // If error occured
+      const error_exists = await this.elementExistsContinue('.error-summary')
+
+      if (error_exists) {
+        await this.click('.error-summary label')
+
+        await this.sleepRandom(true)
+
+        // Click on next button
+        await this.click(this.button_next)
+
+        await this.sleepRandom(true)
+
+        modal_exists = await this.elementExistsContinue(
+          'div#notifyInfo.show #notifyBtn',
+        )
+
+        if (modal_exists) {
+          // Click OK to verify address on modal
+          await this.click('div#notifyInfo.show #notifyBtn')
+
+          await this.sleepRandom(true)
+
+          // Click on Next button
+          await this.clickButtonAndNext(this.button_next)
+        }
+      } else {
+        // Click on Next button
+        await this.clickButtonAndNext(this.button_next, false)
+      }
+    }
+
+    // If still on same page, click next button again
+    const element_exists = await this.elementExistsContinue(
+      '#addEmploymentButton',
+    )
+
+    if (element_exists) {
+      // Click on Next button
+      await this.clickButtonAndNext(this.button_next, false)
     }
   }
 
