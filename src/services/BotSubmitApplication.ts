@@ -42,11 +42,12 @@ export class BotSubmitApplication extends BotUtilities {
     previousAddressEndedYear: any,
   ) {
     super(false, page, null, browser, order)
-    this.botLoginService = new BotLoginService(page, order)
+    this.botLoginService = new BotLoginService(this)
     this.botPaymentService = new BotPaymentService({
       alreadyPaid: false,
       page,
       continueButton: '',
+      botUtils: this,
     })
     this.orderService = new OrderService()
     this.delay = delay

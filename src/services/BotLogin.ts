@@ -13,7 +13,6 @@ import {
   USER_EMAIL_INPUT_SELECTOR,
   USER_PASSWORD_INPUT_SELECTOR,
 } from '../lib'
-import { BotUtilities } from './BotUtilities'
 import {
   LOGIN_PAGE_1_URL,
   LOGIN_PAGE_2_URL,
@@ -22,18 +21,19 @@ import {
   SECOND_MFA_PAGE_URL,
   TWO_FACTOR_AUTHENTICATION_URL,
 } from '../lib/constants'
+import { BotUtilities } from './BotUtilities'
 
 export class BotLoginService {
   captcha_min_score = 0
   private botUtils: BotUtilities
+
   /**
    * Initializes the BotLogin module with the Playwright page object.
-   * @param {playwright.Page} page
-   * @param {object} order
+   * @param {BotUtilities} botUtils
    */
-  constructor(page: Page, order: Order) {
+  constructor(botUtils: BotUtilities) {
     // super(false, page, null, null, order)
-    this.botUtils = new BotUtilities(false, page, null, null, order)
+    this.botUtils = botUtils
   }
 
   // -------------------------------------------------------------------------------------

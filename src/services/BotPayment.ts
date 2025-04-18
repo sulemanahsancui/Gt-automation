@@ -40,11 +40,12 @@ export class BotPaymentService {
     alreadyPaid: boolean
     page: Page
     continueButton: string
+    botUtils: BotUtilities
   }) {
     this.alreadyPaid = props.alreadyPaid
     this.continueButton = props.continueButton
     this.formatter = new Formatter()
-    this.botUtils = new BotUtilities(false, props?.page, null, null)
+    this.botUtils = props.botUtils
   }
 
   // -------------------------------------------------------------------------------------
