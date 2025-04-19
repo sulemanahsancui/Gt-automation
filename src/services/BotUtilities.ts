@@ -453,11 +453,7 @@ export class BotUtilities {
 
   /**
    * Check if element exists but allow continuing if not found
-<<<<<<< HEAD
    * @param selector -
-=======
-   * @param selector - CSS selector
->>>>>>> 8c008fcdafe076745c20eac329eff755c83aa244
    * @returns Promise<boolean>
    */
   async elementExistsContinue(selector: string): Promise<boolean> {

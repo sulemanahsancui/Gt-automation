@@ -19,3 +19,7 @@ export const PAYMENT_PAGE_2_URL =
 export const PAYMENT_PAGE_3_URL = 'https://www.pay.gov/tcsonline/payment.do'
 export const PAYMENT_PAGE_4_URL = 'https://www.pay.gov/tcsonline/payment.do'
 export const DASHBOARD_PAGE_URL = 'https://ttp.cbp.dhs.gov/dashboard'
+
+
+export const STEP_THREE_DONE_URL = 'https://ttp.cbp.dhs.gov/getstarted;stepDone=3'
+export const SELECT_PROGRAM_PAGE_URL = 'https://ttp.cbp.dhs.gov/program-selection/select-program'

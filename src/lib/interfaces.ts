@@ -1,3 +1,4 @@
+import { Page, Browser } from 'playwright'
 export interface JSON {
   [key: string]: any
 }
@@ -36,3 +37,18 @@ export interface Order {
 }
 
 export type ServiceType = 'ge' | 'nexus' | 'sentri' | 'pretsa' | string
+
+
+export interface BotConstructorParams {
+  page: Page
+  order: any
+  browser: Browser
+  delay: number
+  botType: number
+  button_next: string
+  application_id: string
+  minimumYears: number
+  resumeApplication: boolean
+  previousAddressEndedMonth: any
+  previousAddressEndedYear: any
+}
