@@ -38,7 +38,6 @@ export interface Order {
 
 export type ServiceType = 'ge' | 'nexus' | 'sentri' | 'pretsa' | string
 
-
 export interface BotConstructorParams {
   page: Page
   order: any

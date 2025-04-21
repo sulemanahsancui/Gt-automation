@@ -62,7 +62,6 @@ export class BotSubmitApplication extends BotUtilities {
     this.previousAddressEndedMonth = previousAddressEndedMonth
     this.previousAddressEndedYear = previousAddressEndedYear
   }
-  
 
   public async handle(): Promise<boolean> {
     if (!config('APPLICATION_BOT_ACTIVE')) return false
@@ -168,8 +167,7 @@ export class BotSubmitApplication extends BotUtilities {
     await this.sleepRandom()
 
     // Check if page correct
-    const right_page = await this.rightPage(STEP_THREE_DONE_URL,
-    )
+    const right_page = await this.rightPage(STEP_THREE_DONE_URL)
     if (!right_page) return false
 
     // Click continue
@@ -190,7 +188,8 @@ export class BotSubmitApplication extends BotUtilities {
     await this.sleepRandom()
 
     // Check if page correct
-    const right_page = await this.rightPage(SELECT_PROGRAM_PAGE_URL,
+    const right_page = await this.rightPage(
+      SELECT_PROGRAM_PAGE_URL,
       false,
       false,
     )
@@ -1124,7 +1123,7 @@ export class BotSubmitApplication extends BotUtilities {
 
       let ownerTypeElements: { [key: string]: string }
       if (ownerType === 'Individual') {
-        let date: any = this.splitTimeStamp(vehicle.vehicle_owner_dob)
+        const date: any = this.splitTimeStamp(vehicle.vehicle_owner_dob)
         date.day =
           date.day?.toString()?.length === 1 ? `0${date.day}` : date.day
 

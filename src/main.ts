@@ -1,8 +1,20 @@
 import { BROWSER_ARGS, newBrowser } from './lib'
-import { BotSubmitApplication, BotUtilities } from './services'
+import { myDataSource } from './lib/db'
+import { BotSubmitApplication } from './services'
 
 async function run() {
   console.info('Starting Bot...')
+
+  // establish database connection
+  myDataSource
+    .initialize()
+    .then(() => {
+      console.log('Data Source has been initialized!')
+    })
+    .catch((err) => {
+      console.error('Error during Data Source initialization:', err)
+    })
+
   const browser = await newBrowser({
     // headless: config('NODE_ENV') == 'development' ? false : true,
     headless: false,
@@ -11,7 +23,7 @@ async function run() {
   const context = await browser.newContext()
   const page = await context.newPage()
 
-  const botApp = new BotSubmitApplication(page, null)
+  const botApp = new BotSubmitApplication({ page })
 
   await page.setViewportSize(botApp.getRandomScreenSize())
 

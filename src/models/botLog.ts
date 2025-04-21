@@ -1,31 +1,37 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm'
 
 @Entity('bot_log')
 export class BotLog {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @Column({ nullable: true })
-  command: string;
+  command: string
 
   @Column({ nullable: true })
-  ipaddress: string;
+  ipaddress: string
 
   @Column({ type: 'text', nullable: true })
-  proxy_details: string;
+  proxy_details: string
 
   @Column({ nullable: true })
-  proxy_username: string;
+  proxy_username: string
 
   @Column({ type: 'int', nullable: true })
-  order_id: number;
+  order_id: number
 
   @Column({ type: 'text', nullable: true })
-  bot_message: string;
+  bot_message: string
 
   @CreateDateColumn({ type: 'timestamp' })
-  created_at: Date;
+  created_at: Date
 
   @UpdateDateColumn({ type: 'timestamp' })
-  updated_at: Date;
+  updated_at: Date
 }
