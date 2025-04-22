@@ -1,6 +1,5 @@
 import { BROWSER_ARGS, newBrowser } from './lib'
 import { myDataSource } from './lib/db'
-import { BotSubmitApplication } from './services'
 
 async function run() {
   console.info('Starting Bot...')
@@ -23,13 +22,13 @@ async function run() {
   const context = await browser.newContext()
   const page = await context.newPage()
 
-  const botApp = new BotSubmitApplication({ page })
+  // const botApp = new BotSubmitApplication({ page })
 
-  await page.setViewportSize(botApp.getRandomScreenSize())
+  // await page.setViewportSize(botApp.getRandomScreenSize())
 
-  page.on('dialog', async (dialog) => await dialog.accept())
+  // page.on('dialog', async (dialog) => await dialog.accept())
 
-  console.log({ botApp })
+  // console.log({ botApp })ø
 
   console.log('FINISHED...')
 }

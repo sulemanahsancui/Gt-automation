@@ -7,7 +7,7 @@ export const myDataSource = new DataSource({
   username: 'test',
   password: 'test',
   database: 'test',
-  entities: ['src/entity/*.js'],
+  entities: ['src/**/*.entity.ts'],
   logging: true,
   synchronize: true,
 })
