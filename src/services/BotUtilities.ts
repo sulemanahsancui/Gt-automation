@@ -692,6 +692,7 @@ export class BotUtilities {
   async getClassName(selector: string): Promise<string | undefined> {
     return await this.page?.$eval(selector, (el) => el?.className || '')
   }
+
   getCorrect2LetterCountryAbbreviation(country: string): string | false {
     const countries: Record<string, string> = {
       US: 'US',

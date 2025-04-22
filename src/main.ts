@@ -4,14 +4,13 @@ import { myDataSource } from './lib/db'
 async function run() {
   console.info('Starting Bot...')
   // establish database connection
-  myDataSource
-    .initialize()
-    .then(() => {
-      console.log('Data Source has been initialized!')
-    })
-    .catch((err) => {
-      console.error('Error during Data Source initialization:', err)
-    })
+  await myDataSource.initialize().catch((err) => {
+    console.error('Error during Data Source initialization:', err)
+    console.log('Exiting gracefull.')
+    process.exit(0)
+  })
+
+  console.log('Data Source has been initialized!')
 
   const browser = await newBrowser({
     // headless: config('NODE_ENV') == 'development' ? false : true,
@@ -20,7 +19,7 @@ async function run() {
   })
   const context = await browser.newContext()
   const page = await context.newPage()
-  console.log({ page }) 
+  console.log({ page })
   // const botApp = new BotSubmitApplication({ page })
 
   // await page.setViewportSize(botApp.getRandomScreenSize())

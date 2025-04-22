@@ -2,7 +2,6 @@ import { Page } from 'playwright'
 import { config } from '../config'
 import {
   BotConstructorParams,
-  Formatter,
   logger,
   PAGE_13_SELECTORS,
   PAGE_4B_SELECTORS,
@@ -20,8 +19,9 @@ import { SELECT_PROGRAM_PAGE_URL, STEP_THREE_DONE_URL } from '../lib/constants'
 import { BotLoginService } from './BotLogin'
 import { BotPaymentService } from './BotPayment'
 import { BotUtilities } from './BotUtilities'
-import { HelperService } from './HelperService'
+import { HelperService } from './Helper'
 import { OrderService } from './Order'
+import { Formatter } from './formatter'
 
 export class BotSubmitApplication extends BotUtilities {
   botLoginService: BotLoginService
@@ -52,6 +52,17 @@ export class BotSubmitApplication extends BotUtilities {
     previousAddressEndedYear,
   }: BotConstructorParams) {
     super(false, page, null, browser, order)
+
+    this.delay = delay
+    this.botType = botType
+    this.button_next = button_next
+    this.application_id = application_id
+    this.minimumYears = minimumYears
+    this.resumeApplication = resumeApplication
+    this.previousAddressEndedMonth = previousAddressEndedMonth
+    this.previousAddressEndedYear = previousAddressEndedYear
+
+    this.formatter = new Formatter()
     this.botLoginService = new BotLoginService(this)
     this.botPaymentService = new BotPaymentService({
       alreadyPaid: false,
@@ -60,15 +71,6 @@ export class BotSubmitApplication extends BotUtilities {
       botUtils: this,
     })
     this.orderService = new OrderService()
-    this.delay = delay
-    this.botType = botType
-    this.button_next = button_next
-    this.application_id = application_id
-    this.minimumYears = minimumYears
-    this.resumeApplication = resumeApplication
-    this.formatter = new Formatter()
-    this.previousAddressEndedMonth = previousAddressEndedMonth
-    this.previousAddressEndedYear = previousAddressEndedYear
   }
 
   public async handle(): Promise<boolean> {

@@ -12,7 +12,6 @@ import {
   CVV_SELECTOR,
   EXPIRATION_MONTH_SELECTOR,
   EXPIRATION_YEAR_SELECTOR,
-  Formatter,
   PAY_BUTTOnN_PART_SELECTOR,
   PAYMENTNOTICE_EXISTS_SELECTOR,
   sleepRandom,
@@ -26,7 +25,8 @@ import {
   PAYMENT_PAGE_4_URL,
 } from '../lib/constants'
 import { BotUtilities } from './BotUtilities'
-import { HelperService } from './HelperService'
+import { HelperService } from './Helper'
+import { Formatter } from './formatter'
 
 export class BotPaymentService {
   alreadyPaid: boolean
