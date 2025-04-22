@@ -3,7 +3,6 @@ import { myDataSource } from './lib/db'
 
 async function run() {
   console.info('Starting Bot...')
-
   // establish database connection
   myDataSource
     .initialize()
@@ -21,7 +20,7 @@ async function run() {
   })
   const context = await browser.newContext()
   const page = await context.newPage()
-
+  console.log({ page }) 
   // const botApp = new BotSubmitApplication({ page })
 
   // await page.setViewportSize(botApp.getRandomScreenSize())

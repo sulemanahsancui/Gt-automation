@@ -1,5 +1,4 @@
 import * as OTPAuth from 'otpauth'
-import { Page } from 'playwright'
 
 import {
   BUTTON_USA_SELECTOR,
@@ -7,7 +6,6 @@ import {
   LOGIN_BUTTON_SELECTOR,
   LOGIN_MODEL_FOOTER_SELECTOR,
   ONE_TIME_CODE_INPUT_SELECTOR,
-  Order,
   SECOND_MFA_PAGE_BUTTON_SELECTOR,
   sleepRandom,
   USER_EMAIL_INPUT_SELECTOR,
