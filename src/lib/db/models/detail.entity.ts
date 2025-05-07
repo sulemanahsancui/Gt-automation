@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { Max, Min } from 'class-validator'
 import moment from 'moment'
-import { config } from 'src/config'
+import { config } from '../../../config'
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm'
 import { BaseTypeORMEntity } from './baseEntity'
 import { EmploymentEntity } from './employment.entity'

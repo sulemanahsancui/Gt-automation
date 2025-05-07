@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { config } from 'src/config'
+import { config } from '../../../config'
 import { HelperService } from 'src/services'
 import {
   BeforeInsert,

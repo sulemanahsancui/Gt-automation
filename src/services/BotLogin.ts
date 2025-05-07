@@ -42,9 +42,12 @@ export class BotLoginService {
   async login_page_1(): Promise<boolean> {
     // Sleep
     await sleepRandom()
+    console.log('LOGIN_PAGE_1_URL', LOGIN_PAGE_1_URL)
 
+    await this.botUtils.page.goto(LOGIN_PAGE_1_URL)
     // Check if page correct
     const rightPage = await this.botUtils.rightPage(LOGIN_PAGE_1_URL)
+    console.log(rightPage)
     if (!rightPage) return false
 
     // Wait for element to load
@@ -69,6 +72,9 @@ export class BotLoginService {
     // Sleep
     await sleepRandom()
 
+    // await this.botUtils.page.goto(LOGIN_PAGE_2_URL, {
+    //   waitUntil: 'domcontentloaded',
+    // })
     // Check if page correct
     const rightPage = await this.botUtils.rightPage(LOGIN_PAGE_2_URL, false)
     if (!rightPage) return false
@@ -82,11 +88,11 @@ export class BotLoginService {
     // Enter login info
     await this.botUtils.type(
       USER_EMAIL_INPUT_SELECTOR,
-      this.botUtils.order?.login_email as string,
+      'naeemhassanoutfiit+1@gmail.com',
     )
     await this.botUtils.type(
       USER_PASSWORD_INPUT_SELECTOR,
-      this.botUtils.order?.login_pass as string,
+      "e#:W^7Rf2'vEbJh" as string,
     )
     //TODO:IF STEALTH PLUGIN DIDNT WORK USE THIRD PARTY
 
@@ -127,7 +133,7 @@ export class BotLoginService {
 
     // Generate login code
     const totp = new OTPAuth.TOTP({
-      secret: this.botUtils.order?.login_auth_key,
+      secret: '2NFEZBTVFG747IXSITIEFSH4C4O6SLRQ',
       digits: 6,
       algorithm: 'SHA1',
     })

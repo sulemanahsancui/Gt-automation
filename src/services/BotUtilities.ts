@@ -311,6 +311,7 @@ export class BotUtilities {
         delay: Math.floor(Math.random() * (50 - 20 + 1)) + 20,
       })
     } catch (error) {
+      console.log(error)
       this.endExecution('Node Exception')
     }
   }
@@ -449,7 +450,7 @@ export class BotUtilities {
       fullPage: ![3, 4, 5].includes(this.botType),
     })
 
-    await this.order.save()
+    if (this?.order?.save) await this?.order?.save()
   }
 
   /**
@@ -566,7 +567,7 @@ export class BotUtilities {
     noError: boolean = false,
   ): Promise<boolean> {
     const currentUrl = await this.page?.url()
-
+    console.log('urk', { currentUrl }, url)
     // Quick match for non-exact cases
     if (!exact) return currentUrl?.includes(url) ?? false
 
@@ -628,8 +629,7 @@ export class BotUtilities {
         this.order.reason = END_EXECUTION_REASONS[reason]
       }
     }
-
-    await this.order.save()
+    if (this.order.save) await this.order.save()
 
     if (this.botLog) {
       const additionalMessages = [

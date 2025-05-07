@@ -1,5 +1,5 @@
-import { config } from 'src/config'
 import { Column, Entity } from 'typeorm'
+import { config } from '../../../config'
 import { BaseTypeORMEntity } from './baseEntity'
 
 @Entity('bot_log', { schema: config('DB_SCHEMA'), engine: 'InnoDB' })

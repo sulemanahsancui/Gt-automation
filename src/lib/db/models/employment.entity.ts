@@ -1,4 +1,4 @@
-import { config } from 'src/config'
+import { config } from '../../../config'
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm'
 import { BaseTypeORMEntity } from './baseEntity'
 import { DetailEntity } from './detail.entity'

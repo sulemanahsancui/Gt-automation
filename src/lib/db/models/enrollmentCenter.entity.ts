@@ -1,4 +1,4 @@
-import { config } from 'src/config'
+import { config } from '../../../config'
 import { Column, Entity, OneToMany } from 'typeorm'
 import { BaseTypeORMEntity } from './baseEntity'
 import { OrderEntity } from './order.entity'

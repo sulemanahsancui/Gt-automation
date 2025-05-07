@@ -2,7 +2,6 @@ import { Page } from 'playwright'
 import { config } from '../config'
 import {
   BotConstructorParams,
-  logger,
   PAGE_13_SELECTORS,
   PAGE_4B_SELECTORS,
   PAGE_4C_SELECTORS,
@@ -101,7 +100,7 @@ export class BotSubmitApplication extends BotUtilities {
     }
 
     if (this.order.botTries > 2) {
-      logger.info(`${this.order.prettyId} - Too many bot attempts.`)
+      console.info(`${this.order.prettyId} - Too many bot attempts.`)
       await this.orderService.markAsFailed(this.order.id, {
         type: this.botType,
         message: 'Too many bot attempts.',
@@ -109,7 +108,7 @@ export class BotSubmitApplication extends BotUtilities {
       return false
     }
 
-    logger.info(`${this.order.prettyId} - Started the bot for this order.`)
+    console.info(`${this.order.prettyId} - Started the bot for this order.`)
     await this.orderService.markAsStarted(this.order.id, {
       type: this.botType,
     })
@@ -178,11 +177,19 @@ export class BotSubmitApplication extends BotUtilities {
 
     // Check if page correct
     const right_page = await this.rightPage(STEP_THREE_DONE_URL)
-    if (!right_page) return false
+    if (!right_page)
+      await this.page.goto(STEP_THREE_DONE_URL, {
+        waitUntil: 'domcontentloaded',
+      })
+
+    await sleepRandom()
+    await sleepRandom()
+    await sleepRandom()
 
     // Click continue
     await this.clickButtonAndNext(
-      '.page-content .row-button-group button.btn-primary',
+      // '.page-content .row-button-group button.btn-primary',
+      '#main-content > getstarted > div > div.container > div.row.row-button-group.w-100.justify-content-between > div.col-12.col-md-4.col-lg-3.order-md-2 > button',
     )
 
     await this.page_4b()
@@ -201,7 +208,12 @@ export class BotSubmitApplication extends BotUtilities {
       false,
       false,
     )
-    if (!right_page) return false
+    if (!right_page)
+      await this.page.goto(SELECT_PROGRAM_PAGE_URL, {
+        waitUntil: 'domcontentloaded',
+      })
+
+    await sleepRandom()
 
     await this.waitForElement(PAGE_4B_SELECTORS.areCitizenYes)
 
@@ -444,7 +456,7 @@ export class BotSubmitApplication extends BotUtilities {
     // Click on Next button
     await this.clickButtonAndNext(this.button_next)
 
-    this.page_4d_3()
+    await this.page_4d_3()
   }
 
   // -------------------------------------------------------------------------------------
@@ -478,14 +490,17 @@ export class BotSubmitApplication extends BotUtilities {
     await this.sleepRandom()
 
     // Check if page correct
-    const right_page = await this.rightPage(
-      'https://ttp.cbp.dhs.gov/application/',
-      false,
-    )
-    if (!right_page) return false
+    // const right_page = await this.rightPage(
+    //   'https://ttp.cbp.dhs.gov/application/',
+    //   false,
+    // )
+    // if (!right_page)
+    //   return await this.page.goto('https://ttp.cbp.dhs.gov/application/', {
+    //     waitUntil: 'networkidle',
+    //   })
 
     // Click on Personal tab
-    await this.click('.progress-sub-level ul li:nth-child(1) a')
+    // await this.click('.progress-sub-level ul li:nth-child(1) a')
   }
 
   async page_5(): Promise<void> {
@@ -504,7 +519,7 @@ export class BotSubmitApplication extends BotUtilities {
       const applicationId = match[1]
       this.application_id = applicationId
       this.order.application_id = applicationId
-      await this.order.save()
+      if (this.order.save) await this.order.save()
     } else {
       return this.endExecution(
         'Error occurred. Application ID could not be parsed.',

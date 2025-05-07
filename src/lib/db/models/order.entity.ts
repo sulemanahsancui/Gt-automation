@@ -1,4 +1,4 @@
-import { config } from 'src/config'
+import { config } from '../../../config'
 import { OrderStatus, OrderType } from 'src/lib/enums'
 import {
   Column,

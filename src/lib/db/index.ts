@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
-import { config } from 'src/config'
 import { DataSource } from 'typeorm'
+import { config } from '../../config'
 
 dotenv.config()
 
@@ -16,7 +16,7 @@ export const myDataSource = new DataSource({
   logging: config('TYPEORM_LOGGING') === 'true',
   synchronize: config('TYPEORM_SYNC') === 'true',
   timezone: 'Z',
-  charset: 'utf8mb4_unicode_ci',
+  // charset: 'utf8mb4_unicode_ci',
   // cache: {
   //   duration: 60000,
   // },
