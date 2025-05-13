@@ -480,6 +480,536 @@ export class BotSubmitApplication extends BotUtilities {
     await this.page_4d_4()
   }
 
+  async delayPage(delay = 2000) {
+    await this.page.waitForTimeout(delay)
+  }
+
+  async getInnerText(selector: string, timeout = 5000) {
+    let content = ''
+    await this.page
+      .locator(selector)
+      .waitFor({
+        timeout: 5000,
+      })
+      .then(async () => {
+        content = await this.page.locator(selector).innerText()
+      })
+      .catch(() => {
+        return ''
+      })
+    return content
+  }
+
+  // Step 4: Profile Page
+  // https://ttp.cbp.dhs.gov/account-profile/f4c169e3-5920-4a11-84d2-587df9cb5ded
+  async page_4() {
+    // Set dob and minimum age
+
+    // Sleep
+    await this.sleepRandom()
+    // If Dashboard, we will continue application
+    const dashboardPage = this.rightPage(
+      'https://ttp.cbp.dhs.gov/dashboard',
+      true,
+      true,
+    )
+
+    let resumeApplication = true
+    if (dashboardPage) {
+      // Check if there is Continue Application button
+      const button = await this.getInnerText('.dashboard-card .btn-primary')
+
+      // Check if there is no applications in progress
+      // await page.locator(".row .main:nth-of-type(1) .alert").innerText();
+      await this.getInnerText('.row .main:nth-of-type(1) .alert')
+
+      // Check if there's Renew Membership button
+      // const renewButton1 = await page
+      //   .locator(".dashboard-card button.btn-primary:nth-of-type(1)")
+      //   .innerText();
+
+      const renewButton1 = await this.getInnerText(
+        '.dashboard-card button.btn-primary:nth-of-type(1)',
+      )
+
+      // Check if there's Renew Membership 2 button
+      // const renewButton2 = await page
+      //   .locator(".dashboard-card button.btn-primary:nth-of-type(2)")
+      //   .innerText();
+
+      const renewButton2 = await this.getInnerText(
+        '.dashboard-card button.btn-primary:nth-of-type(2)',
+      )
+
+      // Apply for Trusted Traveler Program
+      // const trustedTravelerApply = await page
+      //   .locator(".main:nth-of-type(2) .col-md-4:nth-of-type(1) .btn-primary")
+      //   .innerText();
+
+      const trustedTravelerApply = await this.getInnerText(
+        '.main:nth-of-type(2) .col-md-4:nth-of-type(1) .btn-primary',
+      )
+
+      // Check if application already submitted
+      const applicationPaid = await this.getClassName(
+        '.how-enrollment-works li:nth-child(3)',
+      )
+      const applicationWaitingConditionalApproval = await this.getClassName(
+        '.how-enrollment-works li:nth-child(4)',
+      )
+      const applicationPendingReview = (
+        await this.getInnerText(
+          '.row .main:nth-of-type(1) .dashboard-card .title',
+        )
+      )
+        .trim()
+        .toLowerCase()
+
+      // Cannot renew
+      let cannotRenew = await this.getInnerText(
+        '.dashboard-card .middle > div:nth-of-type(4)',
+      )
+      cannotRenew = cannotRenew
+        .replace('You cannot renew your membership until ', '')
+        .replace('.', '')
+
+      // If Continue Application button
+      if (button && button.toLowerCase() === 'continue application') {
+        // Click Continue Application button
+        await this.page.locator('.dashboard-card .btn-primary').click()
+
+        await this.delayPage(2000)
+
+        return true
+      } else if (button && button.toLowerCase() === 'submit application') {
+        // Click Submit Application button
+        await this.page.locator('.dashboard-card .btn-primary').click()
+        // Save order
+        // order.status = 7
+        // order.save()
+
+        await this.delayPage(2000)
+
+        return await this.endExecution(
+          'Moving order to the payment queue.',
+          // '4',
+          // 'account-profile',
+        )
+      } else if (
+        renewButton1 &&
+        renewButton1.toLowerCase() === 'renew membership'
+      ) {
+        await this.page
+          .locator('.dashboard-card button.btn-primary:nth-of-type(1)')
+          .click()
+        await this.page_4d_1()
+      } else if (
+        renewButton2 &&
+        renewButton2.toLowerCase() === 'renew membership'
+      ) {
+        await this.page
+          .locator('.dashboard-card button.btn-primary:nth-of-type(2)')
+          .click()
+        await this.page_4d_1()
+      } else if (
+        [0, 2, 4, 6, 8, 10, 12].includes(this?.order?.type) &&
+        applicationPaid === 'active' &&
+        applicationWaitingConditionalApproval === 'hourglass' &&
+        applicationPendingReview === 'pending review'
+      ) {
+        let paymentNotRequired = true
+        this.stop = true
+        await this.page_19()
+
+        // If new application and apply new button
+      } else if (
+        [0, 2, 4, 6, 8, 10, 12].includes(this.order?.type) &&
+        trustedTravelerApply.includes('Trusted Traveler Program')
+      ) {
+        await this.page
+          .locator('.main:nth-of-type(2) .col-md-4:nth-of-type(1) .btn-primary')
+          .click()
+        await this.page_4b()
+
+        // If cannot be renewed yet
+      } else if (cannotRenew) {
+        // try {
+        //   const date = new Date(cannotRenew)
+        //   const daysDiff = Math.floor(
+        //     (date - new Date()) / (1000 * 60 * 60 * 24),
+        //   )
+        //   if (daysDiff > 180) {
+        //     order.refund(order.amount)
+        //     order.status = order.STATUS_REFUNDED
+        //     order.save()
+        //   }
+        //   return await driver.endExecution(
+        //     'Renewing Too Early',
+        //     '4',
+        //     'account-profile',
+        //   )
+        // } catch (error) {
+        //   return await driver.endExecution(
+        //     'Renewal date cannot be parsed.',
+        //     '4',
+        //     'account-profile',
+        //   )
+        // }
+      } else {
+        return await this.endExecution(
+          'Continue Application Button Not Found!',
+          // '4',
+          // 'account-profile',
+        )
+      }
+    }
+
+    //   // Check if page correct
+    //   const rightPage = driver.rightPage(
+    //     'https://ttp.cbp.dhs.gov/account-profile/',
+    //     false,
+    //   )
+    //   if (!rightPage) return false
+
+    //   // Wait for element to load
+    //   await page.locator('#lastName').click()
+
+    //   // -----------------------------------------------------------------------------
+    //   // Fill out profile
+
+    //   // If suffix, add it to the last name
+    //   const lastName = details.suffix
+    //     ? `${details.lastName} ${details.suffix}`
+    //     : details.lastName
+
+    //   await driver.delay(2000)
+    //   await driver.type(page.locator('#lastName'), details.lastName)
+
+    //   await driver.delay(2000)
+    //   await driver.type(page.locator('#firstName'), details.firstName)
+
+    //   await driver.delay(2000)
+    //   await driver.type(page.locator('#middleName'), details.middleName)
+
+    //   // await driver.delay(2000);
+    //   // await driver.type(page.locator("#lastName"), 'silver');
+
+    //   // await driver.delay(2000);
+    //   // await driver.type(page.locator("#firstName"), 'hash');
+
+    //   // await driver.delay(2000);
+    //   // await driver.type(page.locator("#middleName"), 'maan');
+
+    //   // await driver.delay(2000);
+    //   // const dobMonth = await getCorrectMonth(details.dobMonth);
+    //   // const dobDay =
+    //   //   (details.dobDay === 1 ? "0" + details.dobDay : details.dobDay).length;
+    //   // await driver.select(page.locator("#DOB_month"), dobMonth);
+    //   // await driver.type(page.locator("#DOB_day"), dobDay);
+    //   // await driver.type(page.locator("#DOB_year"), details.dobYear);
+
+    //   await driver.delay(2000)
+    //   const dobMonth = await getCorrectMonth(details.dobMonth)
+
+    //   const dobDay =
+    //     details.dobDay.toString().length == 1
+    //       ? '0' + details.dobDay
+    //       : details.dobDay
+
+    //   await driver.selectByLabel(page.locator('#DOB_month'), dobMonth)
+    //   await driver.type(page.locator('#DOB_day'), dobDay)
+    //   await driver.type(page.locator('#DOB_year'), details.dobYear)
+
+    //   await driver.select(
+    //     page.locator('#countryOfBirth'),
+    //     getCorrectCountry(details.countryBirth),
+    //   )
+
+    //   switch (details.countryBirth) {
+    //     case 'US':
+    //       await driver.select(
+    //         page.locator('#stateOfBirth'),
+    //         getCorrectState(details.stateBirth),
+    //       )
+    //       break
+
+    //     case 'CA':
+    //       await driver.select(
+    //         page.locator('#stateOfBirth'),
+    //         getCorrectCanadaState(details.stateBirth),
+    //       )
+    //       break
+
+    //     case 'MX':
+    //       if (details.stateBirth === 'CMX') {
+    //         stateOfBirth = getCorrectState('MEX')
+    //       } else {
+    //         stateOfBirth = getCorrectMexicoState(details.stateBirth)
+    //       }
+    //       await driver.select(page.locator('#stateOfBirth'), stateOfBirth)
+    //       break
+
+    //     default:
+    //       await driver.type(page.locator('#stateOfBirth'), details.stateBirth)
+    //   }
+
+    //   await driver.type(page.locator('#cityOfBirth'), details.cityBirth)
+
+    //   await driver.delay(2000)
+    //   const phoneTypes = {
+    //     0: 'C',
+    //     1: 'H',
+    //     2: 'W',
+    //   }
+
+    //   const phoneFormats = {
+    //     0: 'N',
+    //     1: 'M',
+    //     2: 'I',
+    //   }
+
+    //   await driver.delay(2000)
+    //   await driver.select(
+    //     page.locator('#phonetype_0'),
+    //     phoneTypes[order.phoneNumberType],
+    //   )
+    //   await driver.select(page.locator('#phoneformat_0'), phoneFormats[0])
+
+    //   await driver.delay(2000)
+    //   await driver.type(page.locator('#phoneNumber_0'), order.phoneNumber)
+
+    //   // Have you ever applied for Global Entry, NEXUS, or SENTRI?
+
+    //   await driver.click('#appliedTPPN')
+
+    //   if ([1, 3, 5, 7, 9, 11].includes(order.type)) {
+    //     await driver.click('label[for = "appliedTPPYes"]')
+    //     await driver.delay(1000)
+
+    //     await driver.click('label[for = "appToggleTPP"]')
+    //     await driver.delay(1000)
+
+    //     await driver.type(page.locator('#passId'), details.passid)
+    //   }
+
+    //   // Have you ever applied for United States/Mexico FAST or United States/Canada FAST?
+
+    //   if (
+    //     [1, 3, 5, 7, 9, 11].includes(order.type) ||
+    //     details.appliedForFast === 0
+    //   ) {
+    //     await page.locator('#appliedFastN').click()
+    //   } else if (
+    //     ![1, 3, 5, 7, 9, 11].includes(order.type) &&
+    //     details.appliedForFast === 1
+    //   ) {
+    //     await page.locator('#appliedFastY').click()
+
+    //     const memberIdLength = details.passid
+    //     if (memberIdLength === 9) {
+    //       await page.locator('label[for = "appToggleTPP"]').click()
+    //       await driver.type(page.locator('#passId'), details.passid)
+    //     } else if (memberIdLength === 14) {
+    //       await page.locator('label[for = "appToggleFast"]'.click())
+    //       await driver.type(page.locator('#fastId'), details.passid)
+    //     } else {
+    //       return driver.endExecution(
+    //         'FAST ID wrong character length.',
+    //         '4',
+    //         'account-profile',
+    //       )
+    //     }
+    //   }
+
+    //   // Check for validation errors before submission
+    //   fieldError = await driver.checkFieldsError()
+    //   if (fieldError) {
+    //     await driver.endExecution(fieldError, '4', 'account-profile')
+    //   }
+
+    //   // Click on Next button
+    //   await driver.clickButtonAndNext(buttonNext)
+
+    //   // Click confirm on modal
+    //   await page.locator('div.show#accountModal button.btn-primary').click()
+
+    //   // If renewals
+    //   if ([1, 3, 5, 7, 9, 11].includes(order.type)) {
+    //     await driver.delay(2000)
+
+    //     // If we're still on the same page
+    //     const samePage = driver.rightPage(
+    //       'https://ttp.cbp.dhs.gov/account-profile/',
+    //       false,
+    //       true,
+    //     )
+
+    //     if (samePage) {
+    //       // Check if a mismatch error message appears
+    //       const mismatchError = await driver.getInnerText(
+    //         '#alertModal.show .modal-body p:nth-of-type(1) p span',
+    //       )
+    //       mismatchError = mismatchError.trim()
+
+    //       const mismatchErrors = {
+    //         'Please check the place of birth you entered. It does not match with what we have on file.':
+    //           'birthplace-mismatch',
+    //         'Please check the Name you entered. It does not match with what we have on file.':
+    //           'name-mismatch',
+    //         'Please check the date of birth you entered. It does not match with what we have on file.':
+    //           'dob-mismatch',
+    //         'Please check the Membership number you entered. It does not match with what we have on file.':
+    //           'wrong-passid',
+    //       }
+
+    //       if (mismatchError && mismatchErrors[mismatchError]) {
+    //         return await driver.endExecution(
+    //           mismatchErrors[mismatchError],
+    //           '4',
+    //           'account-profile',
+    //         )
+    //       }
+
+    //       await page.locator('#linkModal.show .btn-primary').click()
+    //       await driver.delay(2000)
+
+    //       await page.locator('#docInfoModal.show').click()
+    //       await page.locator('#docInfoModal.show #docType').click()
+
+    //       const passportOption = await driver.getFieldOptionValue(
+    //         '#docType',
+    //         'Passport',
+    //       )
+    //       await driver.select(
+    //         page.locator('#docInfoModal.show #docType'),
+    //         passportOption,
+    //       )
+
+    //       await driver.delay(2000)
+    //       await page.locator('#docInfoModal.show #docCountry').click()
+
+    //       if (details.documentId === 'HK') {
+    //         docCountry = getCorrectCountry('CH', '#docInfoModal.show #docCountry')
+    //       } else {
+    //         docCountry = getCorrectCountry(
+    //           document.countryCitizenship,
+    //           '#docInfoModal.show #docCountry',
+    //         )
+    //       }
+
+    //       await driver.select(
+    //         page.locator('#docInfoModal.show #docCountry'),
+    //         docCountry,
+    //       )
+    //       await driver.type(
+    //         page.locator('#docInfoModal.show #docNumber'),
+    //         await kmsService.decrypt(document.passportNumber),
+    //       )
+    //       await driver.delay(2000)
+
+    //       await page.locator('#docInfoModal.show .btn-primary').click()
+
+    //       const errorExists = await driver.elementExistsContinue(
+    //         '#docInfoModal.show .col-xs-12 field-error',
+    //       )
+
+    //       // If error
+    //       if (errorExists && document.dlNumber) {
+    //         const dlOption = await driver.getFieldOptionValue(
+    //           '#docType',
+    //           "Driver's License",
+    //         )
+    //         await driver.select(
+    //           page.locator('#docInfoModal.show #docType'),
+    //           dlOption,
+    //         )
+    //         await driver.delay(2000)
+
+    //         // Passport info
+    //         if (document.dlCountry === 'HK') {
+    //           docCountry = getCorrectCountryAddressAndEmployment('CH')
+    //         } else {
+    //           docCountry = getCorrectCountryAddressAndEmployment(
+    //             document.dlCountry,
+    //           )
+    //         }
+    //         await driver.select(
+    //           page.locator('#docInfoModal.show #docCountry'),
+    //           docCountry,
+    //         )
+    //         await driver.type(
+    //           page.locator('#docInfoModal.show #docNumber'),
+    //           await kmsService.decrypt(document.dlNumber),
+    //           true,
+    //         )
+    //         await driver.delay(2000)
+
+    //         await page.locator('#docInfoModal.show .btn-primary').click()
+    //         await driver.delay(2000)
+    //       }
+
+    //       // If error exists again, try with a previous passport
+    //       errorExists = await driver.elementExistsContinue(
+    //         '#docInfoModal.show .field-error',
+    //       )
+
+    //       // If error
+    //       if (errorExists && document.previousPassportNumber) {
+    //         await driver.select(
+    //           page.locator('#docInfoModal.show #docType'),
+    //           passportOption,
+    //         )
+    //         await driver.delay(2000)
+
+    //         await driver.select(
+    //           page.locator('#docInfoModal.show #docCountry'),
+    //           docCountry,
+    //         )
+    //         await driver.type(
+    //           page.locator('#docInfoModal.show #docNumber'),
+    //           await kmsService.decrypt(document.previousPassportNumber),
+    //           true,
+    //         )
+    //         await driver.delay(2000)
+
+    //         // click submit
+    //         await page.locator('#docInfoModal.show .btn-primary').click()
+    //         await driver.delay(2000)
+
+    //         // If error exists again, try clicking the button again
+    //         errorExists = await driver.elementExistsContinue(
+    //           '#docInfoModal.show .field-error',
+    //         )
+
+    //         // Click submit again
+    //         if (errorExists) {
+    //           await page.locator('#docInfoModal.show .btn-primary').click()
+    //           await driver.delay(2000)
+    //         }
+    //       }
+
+    //       // If error exists again, end execution with correct error
+    //       errorExists = await driver.elementExistsContinue(
+    //         '#docInfoModal.show .field-error',
+    //       )
+
+    //       if (errorExists) {
+    //         return await driver.endExecution(
+    //           'incorrect-passport',
+    //           '4',
+    //           'account-profile',
+    //         )
+    //       }
+
+    //       await page.locator('#successModal.show .btn-primary').click()
+    //     }
+    //     await page_4d()
+    //     // driver.stepScreenshot("page_4");
+    //   }
+    //   await page_4a()
+    //   // driver.stepScreenshot("page_4");
+  }
+
   // -------------------------------------------------------------------------------------
   // Renewals: Step 4
   // -------------------------------------------------------------------------------------

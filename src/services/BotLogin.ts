@@ -88,11 +88,11 @@ export class BotLoginService {
     // Enter login info
     await this.botUtils.type(
       USER_EMAIL_INPUT_SELECTOR,
-      'naeemhassanoutfiit+1@gmail.com',
+      'fbyzz1nu8v0w@trusted-traveler-assist.com',
     )
     await this.botUtils.type(
       USER_PASSWORD_INPUT_SELECTOR,
-      "e#:W^7Rf2'vEbJh" as string,
+      'HutpWhg9nN6YNG8Z5CpT' as string,
     )
     //TODO:IF STEALTH PLUGIN DIDNT WORK USE THIRD PARTY
 
@@ -133,7 +133,7 @@ export class BotLoginService {
 
     // Generate login code
     const totp = new OTPAuth.TOTP({
-      secret: '2NFEZBTVFG747IXSITIEFSH4C4O6SLRQ',
+      secret: 'WNOPYIDPAVOYBHXZOSBIVHODNDNJSYUA',
       digits: 6,
       algorithm: 'SHA1',
     })

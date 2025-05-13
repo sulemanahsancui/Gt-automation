@@ -690,7 +690,11 @@ export class BotUtilities {
 
   // Get class name of a DOM element
   async getClassName(selector: string): Promise<string | undefined> {
-    return await this.page?.$eval(selector, (el) => el?.className || '')
+    try {
+      return await this.page?.$eval(selector, (el) => el?.className || '')
+    } catch (error) {
+      console.log('Error getting class name:', error)
+    }
   }
 
   getCorrect2LetterCountryAbbreviation(country: string): string | false {
