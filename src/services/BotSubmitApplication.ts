@@ -49,6 +49,9 @@ export class BotSubmitApplication extends BotUtilities {
     resumeApplication,
     previousAddressEndedMonth,
     previousAddressEndedYear,
+    email,
+    password,
+    authKey,
   }: BotConstructorParams) {
     super(false, page, null, browser, order)
 
@@ -62,7 +65,8 @@ export class BotSubmitApplication extends BotUtilities {
     this.previousAddressEndedYear = previousAddressEndedYear
 
     this.formatter = new Formatter()
-    this.botLoginService = new BotLoginService(this)
+    this.botLoginService = new BotLoginService(this, email, password, authKey)
+
     this.botPaymentService = new BotPaymentService({
       alreadyPaid: false,
       page,
@@ -514,7 +518,7 @@ export class BotSubmitApplication extends BotUtilities {
       true,
     )
 
-    let resumeApplication = true
+    const resumeApplication = true
     if (dashboardPage) {
       // Check if there is Continue Application button
       const button = await this.getInnerText('.dashboard-card .btn-primary')
@@ -617,7 +621,7 @@ export class BotSubmitApplication extends BotUtilities {
         applicationWaitingConditionalApproval === 'hourglass' &&
         applicationPendingReview === 'pending review'
       ) {
-        let paymentNotRequired = true
+        const paymentNotRequired = true
         this.stop = true
         await this.page_19()
 

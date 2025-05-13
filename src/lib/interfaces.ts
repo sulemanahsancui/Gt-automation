@@ -50,4 +50,7 @@ export interface BotConstructorParams {
   resumeApplication?: boolean
   previousAddressEndedMonth?: any
   previousAddressEndedYear?: any
+  email?: string
+  password?: string
+  authKey?: string
 }

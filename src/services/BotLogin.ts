@@ -25,13 +25,24 @@ export class BotLoginService {
   captcha_min_score = 0
   private botUtils: BotUtilities
 
+  email: string
+  password: string
+  authKey: string
   /**
    * Initializes the BotLogin module with the Playwright page object.
    * @param {BotUtilities} botUtils
    */
-  constructor(botUtils: BotUtilities) {
+  constructor(
+    botUtils: BotUtilities,
+    email: string,
+    password: string,
+    authKey: string,
+  ) {
     // super(false, page, null, null, order)
     this.botUtils = botUtils
+    this.email = email
+    this.password = password
+    this.authKey = authKey
   }
 
   // -------------------------------------------------------------------------------------
@@ -88,11 +99,13 @@ export class BotLoginService {
     // Enter login info
     await this.botUtils.type(
       USER_EMAIL_INPUT_SELECTOR,
-      'fbyzz1nu8v0w@trusted-traveler-assist.com',
+      this.email,
+      // 'fbyzz1nu8v0w@trusted-traveler-assist.com',
     )
     await this.botUtils.type(
       USER_PASSWORD_INPUT_SELECTOR,
-      'HutpWhg9nN6YNG8Z5CpT' as string,
+      this.password,
+      // 'HutpWhg9nN6YNG8Z5CpT' as string,
     )
     //TODO:IF STEALTH PLUGIN DIDNT WORK USE THIRD PARTY
 
@@ -133,7 +146,8 @@ export class BotLoginService {
 
     // Generate login code
     const totp = new OTPAuth.TOTP({
-      secret: 'WNOPYIDPAVOYBHXZOSBIVHODNDNJSYUA',
+      // secret: 'WNOPYIDPAVOYBHXZOSBIVHODNDNJSYUA',
+      secret: this.authKey,
       digits: 6,
       algorithm: 'SHA1',
     })
